@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+
+# Environment files and local secrets
+.env
+.env.*
+!.env.example
+
+# Build output
+dist/
+build/
+.next/
+out/
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Test and coverage output
+coverage/
+
+# Logs and debug output
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Next.js / Vercel
+.vercel/
+
+# Local certificates and keys
+*.pem
+*.key
+*.crt
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Editor settings
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+
+# Local database dumps and runtime data
+*.dump
+*.bak
+*.sqlite
+*.sqlite3
