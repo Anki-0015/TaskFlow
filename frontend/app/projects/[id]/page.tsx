@@ -10,6 +10,7 @@ import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import ProjectForm from '@/components/projects/ProjectForm';
+import InviteModal from '@/components/projects/InviteModal';
 import TaskForm from '@/components/tasks/TaskForm';
 import { ConfirmDialog } from '@/components/ui/Modal';
 import { showToast } from '@/components/ui/Toast';
@@ -19,6 +20,21 @@ import { useAuth } from '@/hooks/useAuth';
 
 interface Params { id: string }
 
+function MemberAvatar({ name }: { name: string }) {
+  const initials = name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  const hue = ((hash % 360) + 360) % 360;
+  return (
+    <span
+      className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold"
+      style={{ background: `hsl(${hue} 65% 88%)`, color: `hsl(${hue} 55% 35%)` }}
+    >
+      {initials}
+    </span>
+  );
+}
+
 export default function ProjectDetailPage({ params }: { params: Promise<Params> }) {
   const { id } = use(params);
   const router  = useRouter();
@@ -27,11 +43,10 @@ export default function ProjectDetailPage({ params }: { params: Promise<Params> 
   const [project,  setProject]  = useState<Project | null>(null);
   const [tasks,    setTasks]    = useState<Task[]>([]);
   const [members, setMembers] = useState<ProjectMember[]>([]);
-  const [email, setEmail] = useState('');
-  const [memberRole, setMemberRole] = useState<ProjectMember['role']>('MEMBER');
   const [loading,  setLoading]  = useState(true);
   const [showEdit, setShowEdit] = useState(false);
   const [showTask, setShowTask] = useState(false);
+  const [showInvite, setShowInvite] = useState(false);
   const [editTask, setEditTask] = useState<Task | null>(null);
   const [delProject, setDelProject] = useState(false);
   const [delTask,     setDelTask]    = useState<Task | null>(null);
@@ -99,16 +114,6 @@ export default function ProjectDetailPage({ params }: { params: Promise<Params> 
   const priorityDot: Record<string, string> = {
     HIGH: 'bg-red-400', MEDIUM: 'bg-yellow-400', LOW: 'bg-green-400',
   };
-  async function addMember(e: React.FormEvent) {
-    e.preventDefault();
-    try {
-      const res = await ProjectService.addMember(Number(id), email, memberRole);
-      if (res.success && res.data) {
-        setMembers((prev) => [...prev.filter((m) => m.id !== res.data!.id), res.data!]);
-        setEmail(''); showToast('Project member added.', 'success');
-      }
-    } catch (err) { showToast((err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Could not add member.', 'error'); }
-  }
   const completeCount = tasks.filter((task) => task.status === 'COMPLETED').length;
   const progress = tasks.length ? Math.round(completeCount / tasks.length * 100) : 0;
   const canManageProject = Boolean(project && user && project.created_by === user.id);
@@ -161,9 +166,38 @@ export default function ProjectDetailPage({ params }: { params: Promise<Params> 
 
           <Card>
             <div className="px-5 py-4">
-              <div className="mb-4 flex items-center justify-between"><div><h3 className="text-sm font-semibold text-gray-900">Project team</h3><p className="text-xs text-gray-500">Add people by email and set their access role.</p></div><Badge label={`${members.length} members`} /></div>
-              <div className="mb-4 flex flex-wrap gap-2">{members.map((member) => <div key={member.id} className="flex items-center gap-2 rounded-xl bg-gray-50 px-3 py-2"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-700">{member.name.slice(0,1).toUpperCase()}</span><span><span className="block text-xs font-medium text-gray-900">{member.name}</span><span className="block text-[11px] text-gray-500">@{member.username} · {member.role.toLowerCase()}</span></span></div>)}</div>
-              {canManageProject && <form onSubmit={addMember} className="flex flex-wrap gap-2"><input type="email" aria-label="Email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Add by email" required className="min-w-[170px] flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm"/><select aria-label="Member role" value={memberRole} onChange={(e) => setMemberRole(e.target.value as ProjectMember['role'])} className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm"><option value="MEMBER">Member</option><option value="MANAGER">Manager</option><option value="VIEWER">Viewer</option></select><Button type="submit" size="sm">Add person</Button></form>}
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900">Project team</h3>
+                  <p className="text-xs text-gray-500">People with access to this project.</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge label={`${members.length} member${members.length !== 1 ? 's' : ''}`} />
+                  {canManageProject && (
+                    <Button size="sm" onClick={() => setShowInvite(true)} id="invite-people-btn">
+                      <svg viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
+                        <path d="M1 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+                        <path fillRule="evenodd" d="M13.5 5a.5.5 0 0 1 .5.5V7h1.5a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0V8h-1.5a.5.5 0 0 1 0-1H13V5.5a.5.5 0 0 1 .5-.5z"/>
+                      </svg>
+                      Invite people
+                    </Button>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {members.map((member) => (
+                  <div key={member.id} className="flex items-center gap-2 rounded-xl bg-gray-50 px-3 py-2">
+                    <MemberAvatar name={member.name} />
+                    <span>
+                      <span className="block text-xs font-medium text-gray-900">{member.name}</span>
+                      <span className="block text-[11px] text-gray-500">@{member.username} · {member.role.toLowerCase()}</span>
+                    </span>
+                  </div>
+                ))}
+                {members.length === 0 && (
+                  <p className="text-xs text-gray-400">No members yet. Invite people to collaborate.</p>
+                )}
+              </div>
             </div>
           </Card>
 
@@ -249,6 +283,17 @@ export default function ProjectDetailPage({ params }: { params: Promise<Params> 
           onClose={() => setShowEdit(false)}
           onSuccess={(p) => setProject(p)}
           initial={project}
+        />
+      )}
+
+      {/* Invite modal */}
+      {project && (
+        <InviteModal
+          isOpen={showInvite}
+          onClose={() => setShowInvite(false)}
+          projectId={project.id}
+          existingMembers={members}
+          onMembersChange={setMembers}
         />
       )}
 

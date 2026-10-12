@@ -10,6 +10,7 @@ router.use(authenticate);
 router.get('/stats/dashboard', ProjectController.getDashboardStats);
 router.get('/:id/members', ProjectController.getProjectMembers);
 router.post('/:id/members', ProjectController.addProjectMember);
+router.delete('/:id/members/:memberId', ProjectController.removeProjectMember);
 router.get('/',                ProjectController.getProjects);
 router.get('/:id',             ProjectController.getProjectById);
 router.post('/',               ProjectController.createProject);

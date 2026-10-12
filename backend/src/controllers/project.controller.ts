@@ -98,3 +98,12 @@ export async function addProjectMember(req: Request, res: Response): Promise<voi
   try { const data = await ProjectService.addProjectMember(Number(req.params.id), req.user!.id, email, role); res.status(201).json({ success: true, data }); }
   catch (err) { res.status(400).json({ success: false, message: err instanceof Error ? err.message : 'Could not add member.' }); }
 }
+
+export async function removeProjectMember(req: Request, res: Response): Promise<void> {
+  try {
+    await ProjectService.removeProjectMember(Number(req.params.id), req.user!.id, Number(req.params.memberId));
+    res.json({ success: true, message: 'Member removed.' });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err instanceof Error ? err.message : 'Could not remove member.' });
+  }
+}

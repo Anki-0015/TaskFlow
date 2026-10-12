@@ -37,4 +37,7 @@ export const ProjectService = {
   async getMembers(id: number): Promise<ApiResponse<ProjectMember[]>> {
     const { data } = await api.get<ApiResponse<ProjectMember[]>>(`/projects/${id}/members`); return data;
   },
+  async removeMember(id: number, memberId: number): Promise<ApiResponse<void>> {
+    const { data } = await api.delete<ApiResponse<void>>(`/projects/${id}/members/${memberId}`); return data;
+  },
 };

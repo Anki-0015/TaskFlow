@@ -114,13 +114,16 @@ export async function getDashboardStats(userId: number) {
 export async function getProjectMembers(projectId: number, userId: number) {
   await getProjectById(projectId, userId);
   const [rows] = await pool.query<RowDataPacket[]>(
-    `SELECT u.id, u.name, u.username, CASE WHEN p.created_by = u.id THEN 'OWNER' ELSE pm.role END AS role
-     FROM projects p JOIN users u ON u.id = p.created_by
-     LEFT JOIN project_members pm ON pm.project_id = p.id AND pm.user_id = u.id WHERE p.id = ?
-     UNION ALL
-     SELECT u.id, u.name, u.username, pm.role FROM project_members pm JOIN users u ON u.id = pm.user_id
-     WHERE pm.project_id = ? AND u.id <> (SELECT created_by FROM projects WHERE id = ?) ORDER BY name`,
-    [projectId, projectId, projectId]
+    `SELECT u.id, u.name, u.username,
+            CASE WHEN p.created_by = u.id THEN 'OWNER' ELSE pm.role END AS role
+     FROM project_members pm
+     JOIN users u ON u.id = pm.user_id
+     JOIN projects p ON p.id = pm.project_id
+     WHERE pm.project_id = ?
+     ORDER BY FIELD(CASE WHEN p.created_by = u.id THEN 'OWNER' ELSE pm.role END,
+                    'OWNER', 'MANAGER', 'MEMBER', 'VIEWER'),
+              u.name`,
+    [projectId]
   );
   return rows;
 }
@@ -132,4 +135,11 @@ export async function addProjectMember(projectId: number, userId: number, email:
   if (!rows.length) throw new Error('No account found for that email.');
   await pool.query('INSERT INTO project_members (project_id, user_id, role) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE role = VALUES(role)', [projectId, rows[0].id, role]);
   return { ...rows[0], role };
+}
+
+export async function removeProjectMember(projectId: number, requesterId: number, targetUserId: number) {
+  const project = await getProjectById(projectId, requesterId);
+  if (project.created_by !== requesterId) throw new Error('Only the project owner can remove members.');
+  if (project.created_by === targetUserId) throw new Error('Cannot remove the project owner.');
+  await pool.query('DELETE FROM project_members WHERE project_id = ? AND user_id = ?', [projectId, targetUserId]);
 }
