@@ -7,6 +7,7 @@ import { showToast } from '@/components/ui/Toast';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
+import DatePicker from '@/components/ui/DatePicker';
 import { Select, Textarea } from '@/components/ui/index';
 
 interface TaskFormProps {
@@ -137,12 +138,11 @@ export default function TaskForm({
             onChange={(e) => handleChange('status', e.target.value)}
           />
         </div>
-        <Input
+        <DatePicker
           id="task-due"
-          type="date"
           label="Due Date"
           value={form.due_date || ''}
-          onChange={(e) => handleChange('due_date', e.target.value)}
+          onChange={(value) => handleChange('due_date', value)}
         />
 
         {error && (

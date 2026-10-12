@@ -20,7 +20,7 @@ Or via MySQL Workbench: open `schema.sql` and execute.
 mysql -u root -p < seed.sql
 ```
 
-For an existing TaskFlow database, update `backend/.env` and run `npm run db:setup` from the `backend` directory. This applies the project membership table and fills in usernames for older accounts.
+For an existing TaskFlow database, update `backend/.env` and run `npm run db:setup` from the `backend` directory. This applies the project membership and invitation tables and fills in usernames for older accounts.
 
 ### 3. Default Seed Users
 
@@ -39,6 +39,7 @@ For an existing TaskFlow database, update `backend/.env` and run `npm run db:set
 - **users** — Authentication, roles, profiles
 - **projects** — Project records with status lifecycle
 - **project_members** — User access and roles for each project
+- **project_invitations** — In-app project invitations with pending, accepted, and declined states
 - **tasks** — Task items linked to projects and users
 
 ### Entity Relationships

@@ -29,6 +29,17 @@ export interface Project {
 
 export interface ProjectMember { id: number; name: string; username: string; role: 'OWNER' | 'MANAGER' | 'MEMBER' | 'VIEWER'; }
 
+export interface ProjectInvitation {
+  id: number;
+  project_id: number;
+  project_name: string;
+  role: 'MANAGER' | 'MEMBER' | 'VIEWER';
+  status: 'PENDING' | 'ACCEPTED' | 'DECLINED';
+  created_at: string;
+  invited_by_name: string;
+  invited_by_username: string;
+}
+
 export interface Task {
   id: number;
   project_id: number;

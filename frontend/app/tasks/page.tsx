@@ -13,6 +13,8 @@ import Input from '@/components/ui/Input';
 import TaskForm from '@/components/tasks/TaskForm';
 import { ConfirmDialog } from '@/components/ui/Modal';
 import { showToast } from '@/components/ui/Toast';
+import Link from 'next/link';
+import { formatDate } from '@/utils/date';
 
 export default function TasksPage() {
   const [tasks,    setTasks]    = useState<Task[]>([]);
@@ -82,6 +84,15 @@ export default function TasksPage() {
     HIGH: 'bg-red-400', MEDIUM: 'bg-yellow-400', LOW: 'bg-green-400',
   };
 
+  const groupedTasks = [
+    { status: 'TODO', label: 'To do' },
+    { status: 'IN_PROGRESS', label: 'In progress' },
+    { status: 'COMPLETED', label: 'Completed' },
+  ].map((group) => ({ ...group, tasks: tasks.filter((task) => task.status === group.status) }));
+  const completedCount = tasks.filter((task) => task.status === 'COMPLETED').length;
+  const inProgressCount = tasks.filter((task) => task.status === 'IN_PROGRESS').length;
+  const todoCount = tasks.filter((task) => task.status === 'TODO').length;
+
   const statusOpts = [
     { value: '', label: 'All Statuses' },
     { value: 'TODO', label: 'To Do' },
@@ -107,9 +118,22 @@ export default function TasksPage() {
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[.16em] text-blue-600">Get things done</p>
             <h2 className="mt-1 text-2xl font-semibold tracking-tight text-gray-900">All tasks</h2>
-            <p className="mt-1 text-sm text-gray-500">{tasks.length} task{tasks.length !== 1 ? 's' : ''} in your workspace</p>
+            <p className="mt-1 text-sm text-gray-500">{tasks.length} matching task{tasks.length !== 1 ? 's' : ''}</p>
           </div>
           <Button onClick={() => { setEditing(null); setShowForm(true); }}><span aria-hidden="true">＋</span> New task</Button>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {[
+            { label: 'To do', value: todoCount, color: 'text-gray-700' },
+            { label: 'In progress', value: inProgressCount, color: 'text-blue-700' },
+            { label: 'Completed', value: completedCount, color: 'text-green-700' },
+          ].map((item) => (
+            <Card key={item.label} className="px-4 py-3">
+              <p className="text-xs text-gray-500">{item.label}</p>
+              <p className={`mt-1 text-xl font-semibold ${item.color}`}>{item.value}</p>
+            </Card>
+          ))}
         </div>
 
         {/* Filters */}
@@ -153,16 +177,22 @@ export default function TasksPage() {
             action={<Button onClick={() => setShowForm(true)}>Create Task</Button>}
           />
         ) : (
-          <div className="space-y-2">
-            {tasks.map((task) => (
+          <div className="space-y-6">
+            {groupedTasks.filter((group) => group.tasks.length > 0).map((group) => (
+              <section key={group.status} aria-labelledby={`task-group-${group.status}`} className="space-y-2">
+                <div className="flex items-center justify-between px-1">
+                  <h3 id={`task-group-${group.status}`} className="text-sm font-semibold text-gray-800">{group.label}</h3>
+                  <span className="text-xs text-gray-400">{group.tasks.length}</span>
+                </div>
+                {group.tasks.map((task) => (
               <Card key={task.id} className="group">
-                <div className="px-4 py-3 flex items-center gap-3">
+                <div className="px-4 py-4 flex items-start gap-3">
                   {/* Checkbox */}
                   <button
                     onClick={() => toggleStatus(task)}
                     aria-label={`${task.status === 'COMPLETED' ? 'Reopen' : 'Complete'} ${task.title}`}
                     aria-pressed={task.status === 'COMPLETED'}
-                    className={`flex-shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${
+                    className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${
                       task.status === 'COMPLETED'
                         ? 'bg-green-500 border-green-500 text-white'
                         : 'border-gray-300 hover:border-blue-400'
@@ -176,16 +206,22 @@ export default function TasksPage() {
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-medium truncate ${task.status === 'COMPLETED' ? 'line-through text-gray-400' : 'text-gray-900'}`}>
+                    <p className={`text-sm font-semibold ${task.status === 'COMPLETED' ? 'line-through text-gray-400' : 'text-gray-900'}`}>
                       {task.title}
                     </p>
-                    <div className="flex flex-wrap items-center gap-2 mt-0.5">
-                      <span className="text-xs text-gray-400">{task.project_name}</span>
+                    {task.description && <p className="mt-1 line-clamp-2 text-xs text-gray-500">{task.description}</p>}
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      {task.project_name && (
+                        <Link href={`/projects/${task.project_id}`} className="rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100" onClick={(event) => event.stopPropagation()}>
+                          {task.project_name} ↗
+                        </Link>
+                      )}
                       <Badge label={task.status} />
                       <Badge label={task.priority} />
                       {task.due_date && (
-                        <span className="text-xs text-gray-400">Due: {task.due_date.slice(0, 10)}</span>
+                        <span className="text-xs text-gray-400">Due: {formatDate(task.due_date)}</span>
                       )}
+                      {task.assignee_name && <span className="text-xs text-gray-500">Assigned to {task.assignee_name}</span>}
                     </div>
                   </div>
 
@@ -209,6 +245,8 @@ export default function TasksPage() {
                   </div>
                 </div>
               </Card>
+                ))}
+              </section>
             ))}
           </div>
         )}

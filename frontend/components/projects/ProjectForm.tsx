@@ -7,7 +7,9 @@ import { showToast } from '@/components/ui/Toast';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
+import DatePicker from '@/components/ui/DatePicker';
 import { Select, Textarea } from '@/components/ui/index';
+import { addDaysToDateInput, toDateInputValue } from '@/utils/date';
 
 interface ProjectFormProps {
   isOpen: boolean;
@@ -23,27 +25,45 @@ const statusOptions = [
   { value: 'ON_HOLD',   label: 'On Hold'   },
 ];
 
+function initialFormValues(initial?: Project | null) {
+  const startDate = initial?.start_date?.slice(0, 10) || (initial ? '' : toDateInputValue(new Date()));
+  let endDate = initial?.end_date?.slice(0, 10) || '';
+  if (!initial) endDate = addDaysToDateInput(startDate, 1);
+  else if (startDate && (!endDate || endDate <= startDate)) endDate = addDaysToDateInput(startDate, 1);
+  return {
+    name: initial?.name || '',
+    description: initial?.description || '',
+    start_date: startDate,
+    end_date: endDate,
+    status: initial?.status || 'PLANNING',
+  };
+}
+
 export default function ProjectForm({ isOpen, onClose, onSuccess, initial }: ProjectFormProps) {
   const isEdit = Boolean(initial);
 
-  const [form, setForm] = useState({
-    name:        initial?.name        || '',
-    description: initial?.description || '',
-    start_date:  initial?.start_date  || '',
-    end_date:    initial?.end_date    || '',
-    status:      initial?.status      || 'PLANNING',
-  });
+  const [form, setForm] = useState(() => initialFormValues(initial));
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState('');
 
   function handleChange(key: string, value: string) {
-    setForm((prev) => ({ ...prev, [key]: value }));
+    setForm((prev) => {
+      if (key === 'start_date') {
+        const minimumEnd = value ? addDaysToDateInput(value, 1) : '';
+        return { ...prev, start_date: value, end_date: minimumEnd && (!prev.end_date || prev.end_date <= value) ? minimumEnd : prev.end_date };
+      }
+      return { ...prev, [key]: value };
+    });
   }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError('');
     if (!form.name.trim()) { setError('Project name is required.'); return; }
+    if (form.start_date && form.end_date && form.end_date <= form.start_date) {
+      setError('The end date must be at least one day after the start date.');
+      return;
+    }
 
     setLoading(true);
     try {
@@ -97,21 +117,24 @@ export default function ProjectForm({ isOpen, onClose, onSuccess, initial }: Pro
           onChange={(e) => handleChange('description', e.target.value)}
         />
         <div className="grid grid-cols-2 gap-3">
-          <Input
+          <DatePicker
             id="proj-start"
-            type="date"
             label="Start Date"
             value={form.start_date || ''}
-            onChange={(e) => handleChange('start_date', e.target.value)}
+            onChange={(value) => handleChange('start_date', value)}
           />
-          <Input
+          <DatePicker
             id="proj-end"
-            type="date"
             label="End Date"
             value={form.end_date || ''}
-            onChange={(e) => handleChange('end_date', e.target.value)}
+            min={form.start_date ? addDaysToDateInput(form.start_date, 1) : undefined}
+            align="right"
+            onChange={(value) => handleChange('end_date', value)}
           />
         </div>
+        <p className="-mt-2 text-xs text-gray-400">
+          {isEdit ? 'End date must be at least one day after the start date.' : 'New projects start today and end tomorrow by default.'}
+        </p>
         <Select
           id="proj-status"
           label="Status"

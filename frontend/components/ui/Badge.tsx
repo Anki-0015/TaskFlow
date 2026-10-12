@@ -15,6 +15,9 @@ const statusColors: Record<string, string> = {
   LOW:         'bg-green-100 text-green-800',
   MEDIUM:      'bg-yellow-100 text-yellow-800',
   HIGH:        'bg-red-100 text-red-700',
+  PENDING:     'bg-amber-100 text-amber-800',
+  ACCEPTED:    'bg-green-100 text-green-800',
+  DECLINED:    'bg-gray-100 text-gray-700',
   admin:       'bg-purple-100 text-purple-800',
   member:      'bg-gray-100 text-gray-700',
 };

@@ -3,12 +3,15 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { ProjectService } from '@/services/project.service';
 
 const nav = [
   { href: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
   { href: '/projects',  label: 'Projects',  icon: 'projects' },
   { href: '/tasks',     label: 'Tasks',     icon: 'tasks' },
+  { href: '/notifications', label: 'Notifications', icon: 'notifications' },
   { href: '/profile',   label: 'Profile',   icon: 'profile' },
 ];
 
@@ -17,6 +20,7 @@ function NavIcon({ name }: { name: string }) {
     dashboard: <><rect x="3.5" y="3.5" width="7" height="7" rx="1.5" /><rect x="13.5" y="3.5" width="7" height="7" rx="1.5" /><rect x="3.5" y="13.5" width="7" height="7" rx="1.5" /><rect x="13.5" y="13.5" width="7" height="7" rx="1.5" /></>,
     projects: <path d="M3 7.5A1.5 1.5 0 0 1 4.5 6H10l2 2h7.5A1.5 1.5 0 0 1 21 9.5v8a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z" />,
     tasks: <><rect x="4" y="3.5" width="16" height="17" rx="2.5" /><path d="m8 11 2 2 5-5M8 16h8" /></>,
+    notifications: <><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" /><path d="M10 21h4" /></>,
     profile: <><circle cx="12" cy="8" r="3.5" /><path d="M5 20a7 7 0 0 1 14 0" /></>,
   };
   return <svg aria-hidden="true" viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>;
@@ -30,6 +34,19 @@ interface SidebarProps {
 export default function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const [pendingInvites, setPendingInvites] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    const refreshPendingInvites = () => {
+      ProjectService.getInvitations()
+        .then((response) => setPendingInvites((response.data || []).filter((invite) => invite.status === 'PENDING').length))
+        .catch(() => setPendingInvites(0));
+    };
+    refreshPendingInvites();
+    window.addEventListener('taskflow:notifications-updated', refreshPendingInvites);
+    return () => window.removeEventListener('taskflow:notifications-updated', refreshPendingInvites);
+  }, [user]);
 
   return (
     <>
@@ -78,6 +95,11 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
               >
                 <span className="flex w-5 items-center justify-center"><NavIcon name={item.icon} /></span>
                 {item.label}
+                {item.href === '/notifications' && pendingInvites > 0 && (
+                  <span className="ml-auto min-w-5 rounded-full bg-blue-600 px-1.5 py-0.5 text-center text-[10px] font-semibold leading-4 text-white" aria-label={`${pendingInvites} pending invitations`}>
+                    {pendingInvites > 9 ? '9+' : pendingInvites}
+                  </span>
+                )}
               </Link>
             );
           })}

@@ -99,6 +99,29 @@ export async function addProjectMember(req: Request, res: Response): Promise<voi
   catch (err) { res.status(400).json({ success: false, message: err instanceof Error ? err.message : 'Could not add member.' }); }
 }
 
+export async function getProjectInvitations(req: Request, res: Response): Promise<void> {
+  try {
+    const data = await ProjectService.getProjectInvitations(req.user!.id);
+    res.json({ success: true, data });
+  } catch {
+    res.status(500).json({ success: false, message: 'Could not load project invitations.' });
+  }
+}
+
+export async function respondToProjectInvitation(req: Request, res: Response): Promise<void> {
+  const action = req.body?.action;
+  if (action !== 'ACCEPT' && action !== 'DECLINE') {
+    res.status(400).json({ success: false, message: 'Choose whether to accept or decline this invitation.' });
+    return;
+  }
+  try {
+    const data = await ProjectService.respondToProjectInvitation(Number(req.params.invitationId), req.user!.id, action === 'ACCEPT');
+    res.json({ success: true, data });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err instanceof Error ? err.message : 'Could not respond to invitation.' });
+  }
+}
+
 export async function removeProjectMember(req: Request, res: Response): Promise<void> {
   try {
     await ProjectService.removeProjectMember(Number(req.params.id), req.user!.id, Number(req.params.memberId));

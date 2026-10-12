@@ -178,11 +178,11 @@ export default function InviteModal({
     );
     setSending(false);
 
-    const succeeded: ProjectMember[] = [];
+    let succeeded = 0;
     const failed: string[] = [];
     results.forEach((result, idx) => {
       if (result.status === 'fulfilled' && result.value.success && result.value.data) {
-        succeeded.push(result.value.data);
+        succeeded += 1;
       } else {
         const reason =
           result.status === 'rejected'
@@ -192,14 +192,10 @@ export default function InviteModal({
       }
     });
 
-    if (succeeded.length > 0) {
-      const updated = [...members.filter((m) => !succeeded.find((s) => s.id === m.id)), ...succeeded];
-      setMembers(updated);
-      onMembersChange(updated);
+    if (succeeded > 0) {
       setPendingInvites([]);
       setInputValue('');
-      showToast(`${succeeded.length} member${succeeded.length > 1 ? 's' : ''} added successfully.`, 'success');
-      if (failed.length === 0) setActiveTab('members');
+      showToast(`${succeeded} invitation${succeeded > 1 ? 's' : ''} sent. They can accept or decline from Notifications.`, 'success');
     }
     if (failed.length > 0) showToast(failed[0], 'error');
   }

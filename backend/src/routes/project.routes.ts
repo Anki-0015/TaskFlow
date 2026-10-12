@@ -8,6 +8,8 @@ const router = Router();
 router.use(authenticate);
 
 router.get('/stats/dashboard', ProjectController.getDashboardStats);
+router.get('/invitations/inbox', ProjectController.getProjectInvitations);
+router.patch('/invitations/:invitationId', ProjectController.respondToProjectInvitation);
 router.get('/:id/members', ProjectController.getProjectMembers);
 router.post('/:id/members', ProjectController.addProjectMember);
 router.delete('/:id/members/:memberId', ProjectController.removeProjectMember);

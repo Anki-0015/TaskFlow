@@ -12,6 +12,7 @@ import ProjectForm from '@/components/projects/ProjectForm';
 import { ConfirmDialog } from '@/components/ui/Modal';
 import { showToast } from '@/components/ui/Toast';
 import Link from 'next/link';
+import { formatDate } from '@/utils/date';
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -107,30 +108,27 @@ export default function ProjectsPage() {
             {projects.map((p) => (
               <Card
                 key={p.id}
-                className={`border-l-4 ${statusColor[p.status] || 'border-l-gray-300'} hover:-translate-y-0.5 hover:shadow-lg`}
+                className={`relative border-l-4 ${statusColor[p.status] || 'border-l-gray-300'} hover:-translate-y-0.5 hover:shadow-lg`}
               >
-                <div className="px-5 py-5 flex items-start justify-between gap-4">
+                <Link href={`/projects/${p.id}`} aria-label={`Open ${p.name}`} className="absolute inset-0 z-0 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500" />
+                <div className="pointer-events-none relative px-5 py-5 flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <Link
-                        href={`/projects/${p.id}`}
-                        className="text-base font-semibold text-gray-900 hover:text-blue-600 transition-colors"
-                      >
-                        {p.name}
-                      </Link>
+                      <h3 className="text-base font-semibold text-gray-900">{p.name}</h3>
                       <Badge label={p.status} />
                     </div>
                     {p.description && (
                       <p className="text-xs text-gray-500 mt-1 line-clamp-1">{p.description}</p>
                     )}
                     <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
-                      {p.start_date && <span>Start: {p.start_date.slice(0, 10)}</span>}
-                      {p.end_date   && <span>End: {p.end_date.slice(0, 10)}</span>}
+                      <span>Created by {p.creator_name || 'Unknown'}</span>
+                      {p.start_date && <span>Start: {formatDate(p.start_date)}</span>}
+                      {p.end_date   && <span>End: {formatDate(p.end_date)}</span>}
                       <span>{p.task_count ?? 0} tasks · {p.completed_count ?? 0} done</span>
                     </div>
                     <div className="mt-4 max-w-sm"><div className="mb-1.5 flex justify-between text-[11px] text-gray-500"><span>Progress</span><span>{p.task_count ? Math.round((p.completed_count || 0) / p.task_count * 100) : 0}%</span></div><div className="h-1.5 overflow-hidden rounded-full bg-gray-100"><div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-cyan-400" style={{ width: `${p.task_count ? Math.round((p.completed_count || 0) / p.task_count * 100) : 0}%` }} /></div></div>
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="pointer-events-auto relative z-10 flex items-center gap-2 flex-shrink-0">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -155,12 +153,14 @@ export default function ProjectsPage() {
       </div>
 
       {/* Create / Edit form */}
-      <ProjectForm
-        isOpen={showForm}
-        onClose={() => { setShowForm(false); setEditing(null); }}
-        onSuccess={editing ? handleUpdated : handleCreated}
-        initial={editing}
-      />
+      {showForm && (
+        <ProjectForm
+          isOpen={showForm}
+          onClose={() => { setShowForm(false); setEditing(null); }}
+          onSuccess={editing ? handleUpdated : handleCreated}
+          initial={editing}
+        />
+      )}
 
       {/* Confirm delete */}
       <ConfirmDialog

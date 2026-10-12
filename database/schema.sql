@@ -46,6 +46,21 @@ CREATE TABLE IF NOT EXISTS project_members (
   CONSTRAINT fk_project_members_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS project_invitations (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  project_id INT UNSIGNED NOT NULL,
+  invited_user_id INT UNSIGNED NOT NULL,
+  invited_by INT UNSIGNED NOT NULL,
+  role ENUM('MANAGER', 'MEMBER', 'VIEWER') NOT NULL DEFAULT 'MEMBER',
+  status ENUM('PENDING', 'ACCEPTED', 'DECLINED') NOT NULL DEFAULT 'PENDING',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  responded_at DATETIME DEFAULT NULL,
+  CONSTRAINT fk_project_invitations_project FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  CONSTRAINT fk_project_invitations_user FOREIGN KEY (invited_user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_project_invitations_inviter FOREIGN KEY (invited_by) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_project_invitations_inbox (invited_user_id, status, created_at)
+) ENGINE=InnoDB;
+
 
 
 CREATE TABLE IF NOT EXISTS tasks (

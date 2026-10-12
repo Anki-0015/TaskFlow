@@ -1,5 +1,5 @@
 import api from './api';
-import { ApiResponse, Project, DashboardStats, ProjectMember } from '@/types';
+import { ApiResponse, Project, DashboardStats, ProjectMember, ProjectInvitation } from '@/types';
 
 export const ProjectService = {
   async getAll(): Promise<ApiResponse<Project[]>> {
@@ -31,8 +31,14 @@ export const ProjectService = {
     const { data } = await api.get<ApiResponse<DashboardStats>>('/projects/stats/dashboard');
     return data;
   },
-  async addMember(id: number, email: string, role: ProjectMember['role']): Promise<ApiResponse<ProjectMember>> {
-    const { data } = await api.post<ApiResponse<ProjectMember>>(`/projects/${id}/members`, { email, role }); return data;
+  async addMember(id: number, email: string, role: Exclude<ProjectMember['role'], 'OWNER'>): Promise<ApiResponse<{ id: number }>> {
+    const { data } = await api.post<ApiResponse<{ id: number }>>(`/projects/${id}/members`, { email, role }); return data;
+  },
+  async getInvitations(): Promise<ApiResponse<ProjectInvitation[]>> {
+    const { data } = await api.get<ApiResponse<ProjectInvitation[]>>('/projects/invitations/inbox'); return data;
+  },
+  async respondToInvitation(id: number, action: 'ACCEPT' | 'DECLINE'): Promise<ApiResponse<{ status: string }>> {
+    const { data } = await api.patch<ApiResponse<{ status: string }>>(`/projects/invitations/${id}`, { action }); return data;
   },
   async getMembers(id: number): Promise<ApiResponse<ProjectMember[]>> {
     const { data } = await api.get<ApiResponse<ProjectMember[]>>(`/projects/${id}/members`); return data;

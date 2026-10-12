@@ -17,6 +17,7 @@ import { showToast } from '@/components/ui/Toast';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
+import { formatDate } from '@/utils/date';
 
 interface Params { id: string }
 
@@ -147,9 +148,15 @@ export default function ProjectDetailPage({ params }: { params: Promise<Params> 
                 {project.description && (
                   <p className="text-sm text-gray-500 mt-2">{project.description}</p>
                 )}
+                <div className="mt-3 flex items-center gap-2 text-xs text-gray-500">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-50 font-semibold text-blue-700" aria-hidden="true">
+                    {(project.creator_name || 'U').split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase()}
+                  </span>
+                  <span>Created by <strong className="font-medium text-gray-700">{project.creator_name || 'Unknown'}</strong></span>
+                </div>
                 <div className="flex flex-wrap gap-4 mt-3 text-xs text-gray-400">
-                  {project.start_date && <span>📅 Start: {project.start_date.slice(0, 10)}</span>}
-                  {project.end_date   && <span>🏁 End: {project.end_date.slice(0, 10)}</span>}
+                  {project.start_date && <span>📅 Start: {formatDate(project.start_date)}</span>}
+                  {project.end_date   && <span>🏁 End: {formatDate(project.end_date)}</span>}
                   <span>Tasks: {tasks.length} · Done: {tasks.filter(t => t.status === 'COMPLETED').length}</span>
                 </div>
               </div>
@@ -245,7 +252,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<Params> 
                       <div className="flex flex-wrap gap-2 mt-0.5 text-xs text-gray-400">
                         <Badge label={task.status} />
                         <Badge label={task.priority} />
-                        {task.due_date && <span>Due: {task.due_date.slice(0, 10)}</span>}
+                        {task.due_date && <span>Due: {formatDate(task.due_date)}</span>}
                         {task.assignee_name && <span>→ {task.assignee_name}</span>}
                       </div>
                     </div>
@@ -277,7 +284,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<Params> 
       )}
 
       {/* Edit project */}
-      {project && (
+      {project && showEdit && (
         <ProjectForm
           isOpen={showEdit}
           onClose={() => setShowEdit(false)}
