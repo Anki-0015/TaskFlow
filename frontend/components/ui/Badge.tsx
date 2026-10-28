@@ -32,7 +32,7 @@ export default function Badge({ label }: BadgeProps) {
   const displayLabel = statusLabels[label] || label;
 
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${colorClass}`}>
+    <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${colorClass}`}>
       {displayLabel}
     </span>
   );

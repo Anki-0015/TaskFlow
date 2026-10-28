@@ -114,9 +114,8 @@ export default function TasksPage() {
     <DashboardLayout title="Tasks">
       <div className="animate-fade-in space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[.16em] text-blue-600">Get things done</p>
             <h2 className="mt-1 text-2xl font-semibold tracking-tight text-gray-900">All tasks</h2>
             <p className="mt-1 text-sm text-gray-500">{tasks.length} matching task{tasks.length !== 1 ? 's' : ''}</p>
           </div>
@@ -129,7 +128,7 @@ export default function TasksPage() {
             { label: 'In progress', value: inProgressCount, color: 'text-blue-700' },
             { label: 'Completed', value: completedCount, color: 'text-green-700' },
           ].map((item) => (
-            <Card key={item.label} className="px-4 py-3">
+            <Card key={item.label} className="flex min-h-[88px] flex-col justify-center px-4 py-3">
               <p className="text-xs text-gray-500">{item.label}</p>
               <p className={`mt-1 text-xl font-semibold ${item.color}`}>{item.value}</p>
             </Card>
@@ -171,7 +170,7 @@ export default function TasksPage() {
           <PageLoader />
         ) : tasks.length === 0 ? (
           <EmptyState
-            icon="✓"
+            icon="check"
             title="No tasks found"
             description="Create a task or adjust your filters."
             action={<Button onClick={() => setShowForm(true)}>Create Task</Button>}

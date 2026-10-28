@@ -75,9 +75,8 @@ export default function ProjectsPage() {
     <DashboardLayout title="Projects">
       <div className="animate-fade-in space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[.16em] text-blue-600">Plan, build, deliver</p>
             <h2 className="mt-1 text-2xl font-semibold tracking-tight text-gray-900">Your projects</h2>
             <p className="mt-1 text-sm text-gray-500">
               {loadError ? 'Project list is unavailable right now' : `${projects.length} project${projects.length !== 1 ? 's' : ''} across your workspace`}
@@ -98,7 +97,7 @@ export default function ProjectsPage() {
           </Card>
         ) : projects.length === 0 ? (
           <EmptyState
-            icon="📁"
+            icon="folder"
             title="No projects yet"
             description="Create your first project to get started."
             action={<Button onClick={() => setShowForm(true)}>Create Project</Button>}
@@ -126,7 +125,7 @@ export default function ProjectsPage() {
                       {p.end_date   && <span>End: {formatDate(p.end_date)}</span>}
                       <span>{p.task_count ?? 0} tasks · {p.completed_count ?? 0} done</span>
                     </div>
-                    <div className="mt-4 max-w-sm"><div className="mb-1.5 flex justify-between text-[11px] text-gray-500"><span>Progress</span><span>{p.task_count ? Math.round((p.completed_count || 0) / p.task_count * 100) : 0}%</span></div><div className="h-1.5 overflow-hidden rounded-full bg-gray-100"><div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-cyan-400" style={{ width: `${p.task_count ? Math.round((p.completed_count || 0) / p.task_count * 100) : 0}%` }} /></div></div>
+                    <div className="mt-4 max-w-sm"><div className="mb-1.5 flex justify-between text-[11px] text-gray-500"><span>Progress</span><span>{p.task_count ? Math.round((p.completed_count || 0) / p.task_count * 100) : 0}%</span></div><div className="h-1.5 overflow-hidden rounded-full bg-gray-100"><div className="h-full rounded-full bg-blue-600" style={{ width: `${p.task_count ? Math.round((p.completed_count || 0) / p.task_count * 100) : 0}%` }} /></div></div>
                   </div>
                   <div className="pointer-events-auto relative z-10 flex items-center gap-2 flex-shrink-0">
                     <Button

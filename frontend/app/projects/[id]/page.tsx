@@ -125,7 +125,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<Params> 
       {loading ? (
         <PageLoader />
       ) : !project ? (
-        <EmptyState icon="❓" title="Project not found" action={
+        <EmptyState icon="question" title="Project not found" action={
           <Link href="/projects"><Button variant="secondary">Back to Projects</Button></Link>
         } />
       ) : (
@@ -155,8 +155,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<Params> 
                   <span>Created by <strong className="font-medium text-gray-700">{project.creator_name || 'Unknown'}</strong></span>
                 </div>
                 <div className="flex flex-wrap gap-4 mt-3 text-xs text-gray-400">
-                  {project.start_date && <span>📅 Start: {formatDate(project.start_date)}</span>}
-                  {project.end_date   && <span>🏁 End: {formatDate(project.end_date)}</span>}
+                  {project.start_date && <span>Start date: {formatDate(project.start_date)}</span>}
+                  {project.end_date   && <span>End date: {formatDate(project.end_date)}</span>}
                   <span>Tasks: {tasks.length} · Done: {tasks.filter(t => t.status === 'COMPLETED').length}</span>
                 </div>
               </div>
@@ -216,7 +216,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<Params> 
 
           {tasks.length === 0 ? (
             <EmptyState
-              icon="✓"
+              icon="check"
               title="No tasks yet"
               description="Add tasks to this project."
               action={canEditTasks ? <Button size="sm" onClick={() => setShowTask(true)}>Add task</Button> : undefined}

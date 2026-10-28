@@ -19,11 +19,10 @@ interface StatCardProps {
 
 function StatCard({ label, value, sub }: StatCardProps) {
   return (
-    <Card className="relative overflow-hidden p-5 sm:p-6">
-      <div className="absolute right-5 top-5 h-9 w-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center" aria-hidden="true">↗</div>
-      <p className="text-[11px] font-semibold uppercase tracking-[.12em] text-gray-500 mb-3">{label}</p>
+    <Card className="p-5 sm:p-6">
+      <p className="mb-3 text-xs font-medium text-gray-500">{label}</p>
       <p className="text-3xl font-semibold tracking-tight text-gray-900">{value ?? 0}</p>
-      {sub && <p className="text-xs text-gray-400 mt-2">{sub}</p>}
+      {sub && <p className="mt-2 text-xs text-gray-400">{sub}</p>}
     </Card>
   );
 }
@@ -59,17 +58,15 @@ export default function DashboardPage() {
     <DashboardLayout title="Dashboard">
       <div className="animate-fade-in space-y-8">
         {/* Welcome */}
-        <div className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-[#101b36] via-[#173469] to-[#2563a8] px-6 py-8 text-white shadow-xl shadow-blue-950/10 sm:px-9 sm:py-10">
-          <div className="absolute -right-16 -top-24 h-72 w-72 rounded-full border border-white/10" />
-          <div className="absolute -right-4 -top-12 h-56 w-56 rounded-full border border-white/10" />
-          <div className="relative max-w-2xl">
-            <p className="mb-3 text-[11px] font-semibold uppercase tracking-[.2em] text-blue-200">Your workspace at a glance</p>
-            <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Good to see you, {user?.name?.split(' ')[0]}.</h2>
-            <p className="mt-2 max-w-lg text-sm leading-6 text-blue-100/80">Keep your projects moving and make room for the work that matters today.</p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/tasks" className="rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-blue-800 shadow-sm transition hover:bg-blue-50">View my tasks <span aria-hidden="true">→</span></Link>
-              <Link href="/projects" className="rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/15">Browse projects</Link>
-            </div>
+        <div className="flex flex-col gap-5 rounded-2xl border border-gray-200 bg-white px-6 py-6 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-8">
+          <div>
+            <p className="mb-2 text-sm font-medium text-blue-700">Workspace overview</p>
+            <h2 className="text-2xl font-semibold tracking-tight text-gray-900">Good to see you, {user?.name?.split(' ')[0]}.</h2>
+            <p className="mt-2 max-w-xl text-sm leading-6 text-gray-500">Review project status and pick up where you left off.</p>
+          </div>
+          <div className="flex shrink-0 flex-wrap gap-2">
+            <Link href="/tasks" className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700">View tasks</Link>
+            <Link href="/projects" className="rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50">Browse projects</Link>
           </div>
         </div>
 
@@ -102,7 +99,7 @@ export default function DashboardPage() {
             {/* Recent projects */}
             <Card>
               <div className="px-5 py-5 border-b border-gray-100 flex items-center justify-between sm:px-6">
-                <div><h3 className="text-base font-semibold text-gray-900">Recent projects</h3><p className="mt-1 text-xs text-gray-500">A pulse check on your team’s work</p></div>
+                <div><h3 className="text-base font-semibold text-gray-900">Recent projects</h3><p className="mt-1 text-xs text-gray-500">Projects in your workspace</p></div>
                 <Link href="/projects" className="text-xs font-semibold text-blue-600 hover:underline">
                   View all →
                 </Link>

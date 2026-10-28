@@ -56,23 +56,21 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gray-50 p-4 sm:p-8">
-      <div className="pointer-events-none absolute -left-32 -top-36 h-[440px] w-[440px] rounded-full bg-blue-200/35 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-48 -right-24 h-[500px] w-[500px] rounded-full bg-indigo-200/30 blur-3xl" />
+    <div className="relative flex min-h-screen items-center justify-center bg-gray-50 p-4 sm:p-8">
       <div className="fixed right-4 top-4 z-20">
         <ThemeToggle />
       </div>
       <div className="relative w-full max-w-[460px] py-12">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex w-12 h-12 bg-gradient-to-br from-indigo-500 via-blue-600 to-cyan-500 rounded-2xl items-center justify-center mb-4 shadow-lg shadow-blue-500/25">
+          <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600">
             <span className="text-white font-bold text-sm">TF</span>
           </div>
           <h1 className="text-2xl font-semibold tracking-tight text-gray-900">Create your account</h1>
-          <p className="text-sm text-gray-500 mt-2">Set up your workspace and get things moving.</p>
+          <p className="text-sm text-gray-500 mt-2">Create an account to join your workspace.</p>
         </div>
 
-        <div className="bg-white rounded-[26px] border border-gray-200/80 shadow-xl shadow-slate-900/[.06] p-7 sm:p-8">
+        <div className="rounded-2xl border border-gray-200 bg-white p-7 shadow-sm sm:p-8">
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               id="name"

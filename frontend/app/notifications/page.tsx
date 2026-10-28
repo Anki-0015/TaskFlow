@@ -55,12 +55,11 @@ export default function NotificationsPage() {
     <DashboardLayout title="Notifications">
       <div className="animate-fade-in space-y-6">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[.16em] text-blue-600">Your inbox</p>
           <h2 className="mt-1 text-2xl font-semibold tracking-tight text-gray-900">Notifications</h2>
           <p className="mt-1 text-sm text-gray-500">Project invitations and requests that need your response.</p>
         </div>
         {loading ? <PageLoader /> : invitations.length === 0 ? (
-          <EmptyState icon="🔔" title="You’re all caught up" description="New project invitations will show up here." />
+          <EmptyState icon="bell" title="You’re all caught up" description="New project invitations will show up here." />
         ) : (
           <div className="space-y-3">
             {invitations.map((invitation) => (

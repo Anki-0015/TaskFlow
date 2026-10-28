@@ -36,11 +36,11 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
   if (!user) return null;
 
   return (
-    <div className="app-canvas flex min-h-screen overflow-hidden">
+    <div className="app-canvas fixed inset-0 flex overflow-hidden">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <div className="flex-1 flex flex-col min-w-0 min-h-screen overflow-hidden">
-        <header className="app-header sticky top-0 z-20 flex h-[68px] shrink-0 items-center gap-4 border-b px-4 backdrop-blur-xl sm:px-6 lg:px-10">
+      <div className="flex h-dvh min-w-0 flex-1 flex-col overflow-hidden">
+        <header className="app-header sticky top-0 z-20 flex h-[68px] shrink-0 items-center gap-4 border-b px-4 backdrop-blur-sm sm:px-6 lg:px-10">
           <button
             type="button"
             className="menu-button flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-xl transition-colors lg:hidden"
@@ -69,8 +69,8 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
           <ThemeToggle />
         </header>
 
-        <main className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-10 lg:py-9">
-          <div className="mx-auto w-full max-w-[1440px] pb-8">{children}</div>
+        <main className="workspace-scroll-region min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
+          <div className="mx-auto w-full max-w-[1320px] pb-8">{children}</div>
         </main>
       </div>
 
