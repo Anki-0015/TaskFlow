@@ -4,6 +4,42 @@ import { RowDataPacket, ResultSetHeader } from 'mysql2';
 
 interface TaskRow extends Task, RowDataPacket {}
 
+function toDateValue(value: unknown): string | null {
+  if (value instanceof Date) return value.toISOString().slice(0, 10);
+  if (typeof value === 'string' && value) return value.slice(0, 10);
+  return null;
+}
+
+async function ensureDueDateWithinProject(
+  projectId: number,
+  dueDate: string | Date | null | undefined,
+): Promise<void> {
+  if (dueDate === null || dueDate === undefined || dueDate === '') return;
+
+  const dateValue = toDateValue(dueDate);
+  const parsedDate = dateValue && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)
+    ? new Date(`${dateValue}T00:00:00.000Z`)
+    : null;
+  if (!dateValue || !parsedDate || Number.isNaN(parsedDate.getTime()) || parsedDate.toISOString().slice(0, 10) !== dateValue) {
+    throw new Error('Due date must be a valid date.');
+  }
+
+  const [projects] = await pool.query<RowDataPacket[]>(
+    'SELECT start_date, end_date FROM projects WHERE id = ?',
+    [projectId],
+  );
+  if (!projects.length) throw new Error('Project not found.');
+
+  const startDate = toDateValue(projects[0].start_date);
+  const endDate = toDateValue(projects[0].end_date);
+  if (startDate && dateValue < startDate) {
+    throw new Error('Task due date must be on or after the project start date.');
+  }
+  if (endDate && dateValue > endDate) {
+    throw new Error('Task due date must be on or before the project end date.');
+  }
+}
+
 async function ensureCanEditTask(taskId: number, userId: number): Promise<void> {
   const [rows] = await pool.query<RowDataPacket[]>(
     `SELECT p.created_by, pm.role FROM tasks t JOIN projects p ON p.id = t.project_id
@@ -87,7 +123,9 @@ export async function getTaskById(id: number, userId: number): Promise<TaskRow> 
 // ── Create task ───────────────────────────────────────────────────────────
 export async function createTask(data: Partial<Task>, userId: number): Promise<TaskRow> {
   const { project_id, title, description, priority, status, due_date, assigned_to } = data;
-  await ensureCanCreateTask(Number(project_id), userId, assigned_to);
+  const targetProjectId = Number(project_id);
+  await ensureCanCreateTask(targetProjectId, userId, assigned_to);
+  await ensureDueDateWithinProject(targetProjectId, due_date);
 
   const [result] = await pool.query<ResultSetHeader>(
     `INSERT INTO tasks (project_id, title, description, priority, status, due_date, created_by, assigned_to)
@@ -113,23 +151,43 @@ export async function updateTask(
   data: Partial<Task>,
   userId: number
 ): Promise<TaskRow> {
-  await getTaskById(id, userId);
+  const currentTask = await getTaskById(id, userId);
   await ensureCanEditTask(id, userId);
 
-  const { title, description, priority, status, due_date, assigned_to } = data;
-  const [projectRows] = await pool.query<RowDataPacket[]>('SELECT project_id FROM tasks WHERE id = ?', [id]);
-  await ensureCanCreateTask(Number(projectRows[0].project_id), userId, assigned_to);
+  const { project_id, title, description, priority, status, due_date, assigned_to } = data;
+  const targetProjectId = Number(project_id ?? currentTask.project_id);
+  const targetAssignee = assigned_to === undefined ? currentTask.assigned_to : assigned_to;
+  await ensureCanCreateTask(targetProjectId, userId, targetAssignee);
+
+  const projectChanged = targetProjectId !== Number(currentTask.project_id);
+  if (due_date !== undefined || projectChanged) {
+    await ensureDueDateWithinProject(
+      targetProjectId,
+      due_date === undefined ? currentTask.due_date : due_date,
+    );
+  }
 
   await pool.query(
     `UPDATE tasks
-     SET title       = COALESCE(?, title),
+     SET project_id  = COALESCE(?, project_id),
+         title       = COALESCE(?, title),
          description = COALESCE(?, description),
          priority    = COALESCE(?, priority),
          status      = COALESCE(?, status),
-         due_date    = COALESCE(?, due_date),
+         due_date    = CASE WHEN ? THEN ? ELSE due_date END,
          assigned_to = ?
      WHERE id = ?`,
-    [title, description, priority, status, due_date, assigned_to ?? null, id]
+    [
+      project_id ?? null,
+      title,
+      description,
+      priority,
+      status,
+      due_date !== undefined ? 1 : 0,
+      due_date ?? null,
+      targetAssignee ?? null,
+      id,
+    ]
   );
 
   return getTaskById(id, userId);

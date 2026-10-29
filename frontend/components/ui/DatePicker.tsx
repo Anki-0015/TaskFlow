@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { formatDate, toDateInputValue } from '@/utils/date';
 
 interface DatePickerProps {
@@ -9,6 +10,7 @@ interface DatePickerProps {
   value: string;
   onChange: (value: string) => void;
   min?: string;
+  max?: string;
   placeholder?: string;
   align?: 'left' | 'right';
 }
@@ -25,16 +27,20 @@ function sameDay(left: Date, right: Date) {
     && left.getDate() === right.getDate();
 }
 
-export default function DatePicker({ id, label, value, onChange, min, placeholder = 'Choose a date', align = 'left' }: DatePickerProps) {
+export default function DatePicker({ id, label, value, onChange, min, max, placeholder = 'Choose a date', align = 'left' }: DatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [calendarPosition, setCalendarPosition] = useState<{ top: number; left: number } | null>(null);
   const [visibleMonth, setVisibleMonth] = useState(() => {
     const selected = parseDate(value);
     const now = selected || new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
   const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const calendarRef = useRef<HTMLDivElement>(null);
   const selectedDate = parseDate(value);
   const minimumDate = parseDate(min || '');
+  const maximumDate = parseDate(max || '');
   const today = new Date();
   const calendarStart = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 1);
   calendarStart.setDate(1 - calendarStart.getDay());
@@ -45,33 +51,75 @@ export default function DatePicker({ id, label, value, onChange, min, placeholde
   });
   const monthLabel = new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' }).format(visibleMonth);
   const minMonth = minimumDate ? new Date(minimumDate.getFullYear(), minimumDate.getMonth(), 1) : null;
+  const maxMonth = maximumDate ? new Date(maximumDate.getFullYear(), maximumDate.getMonth(), 1) : null;
   const previousDisabled = Boolean(minMonth && visibleMonth.getTime() <= minMonth.getTime());
+  const nextDisabled = Boolean(maxMonth && visibleMonth.getTime() >= maxMonth.getTime());
+
+  const positionCalendar = useCallback(() => {
+    const trigger = triggerRef.current;
+    if (!trigger) return;
+
+    const triggerRect = trigger.getBoundingClientRect();
+    const calendarRect = calendarRef.current?.getBoundingClientRect();
+    const viewportPadding = 12;
+    const gap = 8;
+    const calendarWidth = calendarRect?.width || Math.min(304, window.innerWidth - viewportPadding * 2);
+    const calendarHeight = calendarRect?.height || Math.min(390, window.innerHeight - viewportPadding * 2);
+    const preferredLeft = align === 'right' ? triggerRect.right - calendarWidth : triggerRect.left;
+    const maxLeft = Math.max(viewportPadding, window.innerWidth - calendarWidth - viewportPadding);
+    const left = Math.max(viewportPadding, Math.min(preferredLeft, maxLeft));
+
+    const roomBelow = window.innerHeight - triggerRect.bottom;
+    const roomAbove = triggerRect.top;
+    const placeAbove = roomBelow < calendarHeight + gap && roomAbove > roomBelow;
+    const preferredTop = placeAbove
+      ? triggerRect.top - calendarHeight - gap
+      : triggerRect.bottom + gap;
+    const maxTop = Math.max(viewportPadding, window.innerHeight - calendarHeight - viewportPadding);
+    const top = Math.max(viewportPadding, Math.min(preferredTop, maxTop));
+
+    setCalendarPosition({ top, left });
+  }, [align]);
 
   useEffect(() => {
     if (!isOpen) return;
+    const frame = window.requestAnimationFrame(positionCalendar);
     const closeOnOutsideClick = (event: PointerEvent) => {
-      if (!containerRef.current?.contains(event.target as Node)) setIsOpen(false);
+      const target = event.target;
+      if (
+        target instanceof Node
+        && !containerRef.current?.contains(target)
+        && !calendarRef.current?.contains(target)
+      ) {
+        setIsOpen(false);
+      }
     };
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setIsOpen(false);
     };
     document.addEventListener('pointerdown', closeOnOutsideClick);
     document.addEventListener('keydown', closeOnEscape);
+    document.addEventListener('scroll', positionCalendar, true);
+    window.addEventListener('resize', positionCalendar);
     return () => {
+      window.cancelAnimationFrame(frame);
       document.removeEventListener('pointerdown', closeOnOutsideClick);
       document.removeEventListener('keydown', closeOnEscape);
+      document.removeEventListener('scroll', positionCalendar, true);
+      window.removeEventListener('resize', positionCalendar);
     };
-  }, [isOpen]);
+  }, [isOpen, positionCalendar]);
 
   function openCalendar() {
-    const current = selectedDate || new Date();
+    const current = selectedDate || minimumDate || maximumDate || new Date();
     setVisibleMonth(new Date(current.getFullYear(), current.getMonth(), 1));
+    setCalendarPosition(null);
     setIsOpen((open) => !open);
   }
 
   function chooseDate(date: Date) {
     const dateValue = toDateInputValue(date);
-    if (min && dateValue < min) return;
+    if ((min && dateValue < min) || (max && dateValue > max)) return;
     onChange(dateValue);
     setIsOpen(false);
   }
@@ -80,6 +128,7 @@ export default function DatePicker({ id, label, value, onChange, min, placeholde
     <div ref={containerRef} className="relative flex min-w-0 flex-col gap-1">
       <label htmlFor={id} className="text-sm font-medium text-gray-700">{label}</label>
       <button
+        ref={triggerRef}
         id={id}
         type="button"
         aria-haspopup="dialog"
@@ -96,8 +145,19 @@ export default function DatePicker({ id, label, value, onChange, min, placeholde
         </svg>
       </button>
 
-      {isOpen && (
-        <div id={`${id}-calendar`} role="dialog" aria-label={`${label} calendar`} className={`absolute ${align === 'right' ? 'right-0' : 'left-0'} top-full z-50 mt-2 w-[min(19rem,calc(100vw-3rem))] rounded-2xl border border-gray-200 bg-white p-4 shadow-2xl shadow-slate-900/15 ring-1 ring-black/5 animate-fade-in`}>
+      {isOpen && typeof document !== 'undefined' && createPortal(
+        <div
+          ref={calendarRef}
+          id={`${id}-calendar`}
+          role="dialog"
+          aria-label={`${label} calendar`}
+          style={{
+            top: calendarPosition?.top ?? 0,
+            left: calendarPosition?.left ?? 0,
+            visibility: calendarPosition ? 'visible' : 'hidden',
+          }}
+          className="fixed z-[70] max-h-[calc(100dvh-1.5rem)] w-[min(19rem,calc(100vw-1.5rem))] overflow-y-auto overscroll-contain rounded-2xl border border-gray-200 bg-white p-4 shadow-2xl shadow-slate-900/15 ring-1 ring-black/5 animate-fade-in"
+        >
           <div className="mb-3 flex items-center justify-between">
             <button
               type="button"
@@ -111,8 +171,9 @@ export default function DatePicker({ id, label, value, onChange, min, placeholde
             <h3 className="text-sm font-semibold text-gray-900">{monthLabel}</h3>
             <button
               type="button"
+              disabled={nextDisabled}
               onClick={() => setVisibleMonth(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1))}
-              className="flex h-9 w-9 items-center justify-center rounded-xl text-gray-500 transition hover:bg-gray-100 hover:text-gray-900"
+              className="flex h-9 w-9 items-center justify-center rounded-xl text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-30"
               aria-label="Next month"
             >
               <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none"><path d="m7.5 4.5 5 5.5-5 5.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -128,7 +189,7 @@ export default function DatePicker({ id, label, value, onChange, min, placeholde
               const isSelected = Boolean(selectedDate && sameDay(date, selectedDate));
               const isToday = sameDay(date, today);
               const isOutsideMonth = date.getMonth() !== visibleMonth.getMonth();
-              const isDisabled = Boolean(min && dateValue < min);
+              const isDisabled = Boolean((min && dateValue < min) || (max && dateValue > max));
               return (
                 <button
                   key={dateValue}
@@ -159,14 +220,15 @@ export default function DatePicker({ id, label, value, onChange, min, placeholde
             </button>
             <button
               type="button"
-              disabled={Boolean(min && toDateInputValue(today) < min)}
+              disabled={Boolean((min && toDateInputValue(today) < min) || (max && toDateInputValue(today) > max))}
               onClick={() => chooseDate(today)}
               className="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-100 disabled:opacity-40"
             >
               Today
             </button>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );

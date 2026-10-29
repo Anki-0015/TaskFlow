@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useEffect, useState, FormEvent } from 'react';
 import { Task, Project, ProjectMember } from '@/types';
 import { TaskService } from '@/services/task.service';
 import { showToast } from '@/components/ui/Toast';
@@ -9,6 +9,7 @@ import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import DatePicker from '@/components/ui/DatePicker';
 import { Select, Textarea } from '@/components/ui/index';
+import { formatDate } from '@/utils/date';
 
 interface TaskFormProps {
   isOpen: boolean;
@@ -18,6 +19,28 @@ interface TaskFormProps {
   projects: Project[];
   defaultProjectId?: number;
   members?: ProjectMember[];
+}
+
+function getFormValues(initial: TaskFormProps['initial'], defaultProjectId: number | undefined, projects: Project[]) {
+  const projectId = String(initial?.project_id || defaultProjectId || projects[0]?.id || '');
+  const project = projects.find((item) => String(item.id) === projectId);
+  const projectStart = project?.start_date?.slice(0, 10);
+  const projectEnd = project?.end_date?.slice(0, 10);
+  let dueDate = initial?.due_date?.slice(0, 10) || '';
+
+  if ((projectStart && dueDate < projectStart) || (projectEnd && dueDate > projectEnd)) {
+    dueDate = '';
+  }
+
+  return {
+    project_id: projectId,
+    title: initial?.title || '',
+    description: initial?.description || '',
+    priority: initial?.priority || 'MEDIUM',
+    status: initial?.status || 'TODO',
+    due_date: dueDate,
+    assigned_to: String(initial?.assigned_to || ''),
+  };
 }
 
 export default function TaskForm({
@@ -31,19 +54,37 @@ export default function TaskForm({
 }: TaskFormProps) {
   const isEdit = Boolean(initial);
 
-  const [form, setForm] = useState({
-    project_id:  String(initial?.project_id || defaultProjectId || projects[0]?.id || ''),
-    title:       initial?.title       || '',
-    description: initial?.description || '',
-    priority:    initial?.priority    || 'MEDIUM',
-    status:      initial?.status      || 'TODO',
-    due_date:    initial?.due_date    || '',
-    assigned_to: String(initial?.assigned_to || ''),
-  });
+  const [form, setForm] = useState(() => getFormValues(initial, defaultProjectId, projects));
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState('');
+  const projectRangesKey = projects.map((project) => `${project.id}:${project.start_date || ''}:${project.end_date || ''}`).join('|');
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps -- Reset when the form opens or its task/project date ranges change; the range key avoids resets caused only by a new array identity.
+  useEffect(() => {
+    if (!isOpen) return;
+    setForm(getFormValues(initial, defaultProjectId, projects));
+    setError('');
+  }, [isOpen, initial?.id, defaultProjectId, projectRangesKey]);
+
+  const selectedProject = projects.find((project) => String(project.id) === form.project_id);
+  const projectStartDate = selectedProject?.start_date?.slice(0, 10);
+  const projectEndDate = selectedProject?.end_date?.slice(0, 10);
 
   function handleChange(key: string, value: string) {
+    if (key === 'project_id') {
+      const nextProject = projects.find((project) => String(project.id) === value);
+      const nextStart = nextProject?.start_date?.slice(0, 10);
+      const nextEnd = nextProject?.end_date?.slice(0, 10);
+      setForm((prev) => ({
+        ...prev,
+        project_id: value,
+        due_date: (nextStart && prev.due_date < nextStart) || (nextEnd && prev.due_date > nextEnd)
+          ? ''
+          : prev.due_date,
+      }));
+      setError('');
+      return;
+    }
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
@@ -52,6 +93,14 @@ export default function TaskForm({
     setError('');
     if (!form.title.trim()) { setError('Task title is required.'); return; }
     if (!form.project_id)   { setError('Please select a project.'); return; }
+    if (form.due_date && projectStartDate && form.due_date < projectStartDate) {
+      setError(`Due date must be on or after ${formatDate(projectStartDate)}.`);
+      return;
+    }
+    if (form.due_date && projectEndDate && form.due_date > projectEndDate) {
+      setError(`Due date must be on or before ${formatDate(projectEndDate)}.`);
+      return;
+    }
 
     setLoading(true);
     try {
@@ -61,7 +110,7 @@ export default function TaskForm({
         description: form.description || undefined,
         priority:    form.priority as Task['priority'],
         status:      form.status as Task['status'],
-        due_date:    form.due_date || undefined,
+        due_date:    form.due_date || null,
         assigned_to: form.assigned_to ? Number(form.assigned_to) : null,
       };
 
@@ -142,8 +191,19 @@ export default function TaskForm({
           id="task-due"
           label="Due Date"
           value={form.due_date || ''}
+          min={projectStartDate}
+          max={projectEndDate}
           onChange={(value) => handleChange('due_date', value)}
         />
+        {(projectStartDate || projectEndDate) && (
+          <p className="-mt-2 text-xs text-gray-400">
+            {projectStartDate && projectEndDate
+              ? `Choose a date between ${formatDate(projectStartDate)} and ${formatDate(projectEndDate)}.`
+              : projectStartDate
+                ? `Choose ${formatDate(projectStartDate)} or later.`
+                : `Choose ${formatDate(projectEndDate)} or earlier.`}
+          </p>
+        )}
 
         {error && (
           <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
