@@ -1,62 +1,47 @@
 # TaskFlow
 
-TaskFlow is a simple project and task management app.
+TaskFlow is a project and task management app built with Next.js, Express, and MySQL.
 
-## Stack
+## Run with Docker
 
-- **Frontend:** Next.js, React, TypeScript, Tailwind CSS
-- **Backend:** Node.js, Express, TypeScript
-- **Database:** MySQL
-
-## Setup
-
-### 1. Install dependencies
+Requirements: Docker Engine or Docker Desktop with the Compose plugin.
 
 ```bash
-cd backend
-npm install
-
-cd ../frontend
-npm install
+cp docker.env.example .env
+docker compose up --build -d
 ```
 
-### 2. Configure environment variables
+Open the app at [http://localhost:3000](http://localhost:3000). The API health endpoint is [http://localhost:5001/health](http://localhost:5001/health).
 
-Create the backend environment file:
+Compose starts MySQL, creates the schema, loads the sample data, and waits for the database and API health checks before starting dependent services. MySQL data persists in a named volume. The initialization SQL runs only when that volume is first created.
+
+To stop the services while keeping the database:
 
 ```bash
-cp backend/.env.example backend/.env
+docker compose down
 ```
 
-Update the database credentials and JWT secret in `backend/.env`.
-
-Create `frontend/.env.local` with:
-
-```env
-NEXT_PUBLIC_API_URL=http://localhost:5001/api
-```
-
-### 3. Set up the database
-
-Make sure MySQL is running, then run:
+To remove the database and start again with a fresh schema and seed data:
 
 ```bash
-mysql -u root -p < database/schema.sql
-mysql -u root -p < database/seed.sql
+docker compose down -v
+docker compose up --build -d
 ```
 
-## Run the app
-
-Start the backend:
+The `.env` file controls the database credentials, JWT secret, frontend API URL, and host ports. Change the sample JWT secret before deploying. `NEXT_PUBLIC_API_URL` is embedded in the frontend at build time, so rebuild the frontend after changing it:
 
 ```bash
-cd backend
-npm run dev
+docker compose build frontend
+docker compose up -d
 ```
 
-Start the frontend in another terminal:
+## Run locally without Docker
 
-```bash
-cd frontend
-npm run dev
-```
+Install Node.js and MySQL, install dependencies in `backend/` and `frontend/` with `npm install`, then:
+
+1. Copy `backend/.env.example` to `backend/.env` and set the database credentials and JWT secret.
+2. Create the database with `mysql -u root -p < database/schema.sql`; optionally load sample data with `mysql -u root -p < database/seed.sql`.
+3. Set `NEXT_PUBLIC_API_URL=http://localhost:5001/api` in `frontend/.env.local`.
+4. Start the API with `cd backend && npm run dev` and the frontend with `cd frontend && npm run dev` in separate terminals.
+
+See [database/README.md](database/README.md) for the schema details and sample accounts.
