@@ -9,13 +9,16 @@ export async function getProjects(userId: number): Promise<ProjectRow[]> {
   const [rows] = await pool.query<ProjectRow[]>(
     `SELECT p.*,
             u.name  AS creator_name,
+            CASE WHEN p.created_by = ? THEN 'MANAGER'
+                 ELSE (SELECT pm_current.role FROM project_members pm_current WHERE pm_current.project_id = p.id AND pm_current.user_id = ?)
+            END AS current_user_project_role,
             (SELECT COUNT(*) FROM tasks t WHERE t.project_id = p.id)              AS task_count,
             (SELECT COUNT(*) FROM tasks t WHERE t.project_id = p.id AND t.status = 'COMPLETED') AS completed_count
      FROM projects p
      JOIN users u ON u.id = p.created_by
      WHERE p.created_by = ? OR EXISTS (SELECT 1 FROM project_members pm WHERE pm.project_id = p.id AND pm.user_id = ?)
      ORDER BY p.created_at DESC`,
-    [userId, userId]
+    [userId, userId, userId, userId]
   );
   return rows;
 }
@@ -25,12 +28,15 @@ export async function getProjectById(id: number, userId: number): Promise<Projec
   const [rows] = await pool.query<ProjectRow[]>(
     `SELECT p.*,
             u.name AS creator_name,
+            CASE WHEN p.created_by = ? THEN 'MANAGER'
+                 ELSE (SELECT pm_current.role FROM project_members pm_current WHERE pm_current.project_id = p.id AND pm_current.user_id = ?)
+            END AS current_user_project_role,
             (SELECT COUNT(*) FROM tasks t WHERE t.project_id = p.id)              AS task_count,
             (SELECT COUNT(*) FROM tasks t WHERE t.project_id = p.id AND t.status = 'COMPLETED') AS completed_count
      FROM projects p
      JOIN users u ON u.id = p.created_by
      WHERE p.id = ? AND (p.created_by = ? OR EXISTS (SELECT 1 FROM project_members pm WHERE pm.project_id = p.id AND pm.user_id = ?))`,
-    [id, userId, userId]
+    [userId, userId, id, userId, userId]
   );
   if (rows.length === 0) throw new Error('Project not found.');
   return rows[0];
@@ -114,17 +120,17 @@ export async function getDashboardStats(userId: number) {
 export async function getProjectMembers(projectId: number, userId: number) {
   await getProjectById(projectId, userId);
   const [rows] = await pool.query<RowDataPacket[]>(
-    `SELECT u.id, u.name, u.username, 'OWNER' AS role
+    `SELECT u.id, u.name, u.username, 'MANAGER' AS role, TRUE AS is_owner
      FROM projects p
      JOIN users u ON u.id = p.created_by
      WHERE p.id = ?
      UNION ALL
-     SELECT u.id, u.name, u.username, pm.role
+     SELECT u.id, u.name, u.username, pm.role, FALSE AS is_owner
      FROM project_members pm
      JOIN users u ON u.id = pm.user_id
      WHERE pm.project_id = ?
        AND pm.user_id <> (SELECT created_by FROM projects WHERE id = ?)
-     ORDER BY FIELD(role, 'OWNER', 'MANAGER', 'MEMBER', 'VIEWER'), name`,
+     ORDER BY FIELD(role, 'MANAGER', 'MEMBER', 'VIEWER'), name`,
     [projectId, projectId, projectId]
   );
   return rows;

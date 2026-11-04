@@ -15,6 +15,7 @@ import { ConfirmDialog } from '@/components/ui/Modal';
 import { showToast } from '@/components/ui/Toast';
 import Link from 'next/link';
 import { formatDate } from '@/utils/date';
+import { canCreateProjectTasks, canManageTask, getNextTaskStatus, getTaskStatusActionLabel } from '@/utils/taskPermissions';
 
 export default function TasksPage() {
   const [tasks,    setTasks]    = useState<Task[]>([]);
@@ -71,7 +72,8 @@ export default function TasksPage() {
   }
 
   async function toggleStatus(task: Task) {
-    const next = task.status === 'COMPLETED' ? 'TODO' : 'COMPLETED';
+    const next = getNextTaskStatus(task);
+    if (!next) return;
     try {
       const res = await TaskService.updateStatus(task.id, next);
       if (res.success) setTasks((prev) => prev.map((t) => (t.id === task.id ? res.data! : t)));
@@ -109,6 +111,7 @@ export default function TasksPage() {
     { value: '', label: 'All Projects' },
     ...projects.map((p) => ({ value: String(p.id), label: p.name })),
   ];
+  const taskableProjects = projects.filter(canCreateProjectTasks);
 
   return (
     <DashboardLayout title="Tasks">
@@ -119,7 +122,7 @@ export default function TasksPage() {
             <h2 className="mt-1 text-2xl font-semibold tracking-tight text-gray-900">All tasks</h2>
             <p className="mt-1 text-sm text-gray-500">{tasks.length} matching task{tasks.length !== 1 ? 's' : ''}</p>
           </div>
-          <Button onClick={() => { setEditing(null); setShowForm(true); }}><span aria-hidden="true">＋</span> New task</Button>
+          {taskableProjects.length > 0 && <Button onClick={() => { setEditing(null); setShowForm(true); }}><span aria-hidden="true">＋</span> New task</Button>}
         </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -173,7 +176,7 @@ export default function TasksPage() {
             icon="check"
             title="No tasks found"
             description="Create a task or adjust your filters."
-            action={<Button onClick={() => setShowForm(true)}>Create Task</Button>}
+            action={taskableProjects.length > 0 ? <Button onClick={() => setShowForm(true)}>Create Task</Button> : undefined}
           />
         ) : (
           <div className="space-y-6">
@@ -188,16 +191,17 @@ export default function TasksPage() {
                 <div className="px-4 py-4 flex items-start gap-3">
                   {/* Checkbox */}
                   <button
+                    disabled={!getNextTaskStatus(task)}
                     onClick={() => toggleStatus(task)}
-                    aria-label={`${task.status === 'COMPLETED' ? 'Reopen' : 'Complete'} ${task.title}`}
-                    aria-pressed={task.status === 'COMPLETED'}
+                    aria-label={getTaskStatusActionLabel(task)}
                     className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${
-                      task.status === 'COMPLETED'
+                      task.status === 'COMPLETED' && task.current_user_project_role === 'MANAGER'
                         ? 'bg-green-500 border-green-500 text-white'
                         : 'border-gray-300 hover:border-blue-400'
-                    }`}
+                    } disabled:cursor-not-allowed disabled:opacity-50`}
                   >
-                    {task.status === 'COMPLETED' && <span className="text-[10px] font-bold">✓</span>}
+                    {task.status === 'COMPLETED' && task.current_user_project_role === 'MANAGER' && <span className="text-[10px] font-bold">✓</span>}
+                    {task.current_user_project_role === 'MEMBER' && task.status !== 'IN_PROGRESS' && <span className="text-[10px] font-bold">→</span>}
                   </button>
 
                   {/* Priority dot */}
@@ -225,7 +229,7 @@ export default function TasksPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex-shrink-0 flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity">
+                  {canManageTask(task) && <div className="flex-shrink-0 flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -241,7 +245,7 @@ export default function TasksPage() {
                     >
                       <span aria-hidden="true">×</span><span className="sr-only">Delete task</span>
                     </Button>
-                  </div>
+                  </div>}
                 </div>
               </Card>
                 ))}
@@ -263,7 +267,7 @@ export default function TasksPage() {
           }
         }}
         initial={editing}
-        projects={projects}
+        projects={taskableProjects}
       />
 
       {/* Confirm delete */}

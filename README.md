@@ -34,14 +34,3 @@ The `.env` file controls the database credentials, JWT secret, frontend API URL,
 docker compose build frontend
 docker compose up -d
 ```
-
-## Run locally without Docker
-
-Install Node.js and MySQL, install dependencies in `backend/` and `frontend/` with `npm install`, then:
-
-1. Copy `backend/.env.example` to `backend/.env` and set the database credentials and JWT secret.
-2. Create the database with `mysql -u root -p < database/schema.sql`; optionally load sample data with `mysql -u root -p < database/seed.sql`.
-3. Set `NEXT_PUBLIC_API_URL=http://localhost:5001/api` in `frontend/.env.local`.
-4. Start the API with `cd backend && npm run dev` and the frontend with `cd frontend && npm run dev` in separate terminals.
-
-See [database/README.md](database/README.md) for the schema details and sample accounts.

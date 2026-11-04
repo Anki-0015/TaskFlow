@@ -49,6 +49,29 @@ async function ensureCanEditTask(taskId: number, userId: number): Promise<void> 
   if (rows[0].created_by !== userId && rows[0].role === 'VIEWER') throw new Error('Viewers cannot modify tasks.');
 }
 
+async function ensureCanChangeTaskStatus(taskId: number, userId: number, nextStatus: string): Promise<void> {
+  const [rows] = await pool.query<RowDataPacket[]>(
+    `SELECT p.created_by, pm.role
+     FROM tasks t
+     JOIN projects p ON p.id = t.project_id
+     LEFT JOIN project_members pm ON pm.project_id = p.id AND pm.user_id = ?
+     WHERE t.id = ?`,
+    [userId, taskId]
+  );
+  if (!rows.length) throw new Error('Task not found.');
+
+  const role = Number(rows[0].created_by) === userId ? 'MANAGER' : rows[0].role;
+  if (role === 'VIEWER' || !role) {
+    throw new Error('Viewers can only view tasks.');
+  }
+  if (role === 'MEMBER' && nextStatus !== 'IN_PROGRESS') {
+    throw new Error('Members can only move tasks to In Progress.');
+  }
+  if (role !== 'MANAGER' && role !== 'MEMBER') {
+    throw new Error('You do not have permission to change this task status.');
+  }
+}
+
 async function ensureCanCreateTask(projectId: number, userId: number, assignedTo?: number | null): Promise<void> {
   const [members] = await pool.query<RowDataPacket[]>(
     `SELECT p.created_by, pm.role FROM projects p LEFT JOIN project_members pm ON pm.project_id = p.id AND pm.user_id = ? WHERE p.id = ?`, [userId, projectId]
@@ -71,7 +94,10 @@ function baseTaskQuery() {
       t.*,
       p.name       AS project_name,
       u1.name      AS creator_name,
-      u2.name      AS assignee_name
+      u2.name      AS assignee_name,
+      CASE WHEN p.created_by = ? THEN 'MANAGER'
+           ELSE (SELECT pm_current.role FROM project_members pm_current WHERE pm_current.project_id = p.id AND pm_current.user_id = ?)
+      END AS current_user_project_role
     FROM tasks t
     JOIN projects p  ON p.id = t.project_id
     JOIN users   u1  ON u1.id = t.created_by
@@ -85,7 +111,7 @@ export async function getTasks(
   filters: { status?: string; priority?: string; projectId?: string; search?: string }
 ): Promise<TaskRow[]> {
   let query = baseTaskQuery() + ' WHERE (p.created_by = ? OR EXISTS (SELECT 1 FROM project_members pm WHERE pm.project_id = p.id AND pm.user_id = ?))';
-  const params: (string | number)[] = [userId, userId];
+  const params: (string | number)[] = [userId, userId, userId, userId];
 
   if (filters.status) {
     query += ' AND t.status = ?';
@@ -114,7 +140,7 @@ export async function getTasks(
 export async function getTaskById(id: number, userId: number): Promise<TaskRow> {
   const [rows] = await pool.query<TaskRow[]>(
     baseTaskQuery() + ' WHERE t.id = ? AND (p.created_by = ? OR EXISTS (SELECT 1 FROM project_members pm WHERE pm.project_id = p.id AND pm.user_id = ?))',
-    [id, userId, userId]
+    [userId, userId, id, userId, userId]
   );
   if (rows.length === 0) throw new Error('Task not found.');
   return rows[0];
@@ -122,7 +148,7 @@ export async function getTaskById(id: number, userId: number): Promise<TaskRow> 
 
 // ── Create task ───────────────────────────────────────────────────────────
 export async function createTask(data: Partial<Task>, userId: number): Promise<TaskRow> {
-  const { project_id, title, description, priority, status, due_date, assigned_to } = data;
+  const { project_id, title, description, priority, due_date, assigned_to } = data;
   const targetProjectId = Number(project_id);
   await ensureCanCreateTask(targetProjectId, userId, assigned_to);
   await ensureDueDateWithinProject(targetProjectId, due_date);
@@ -135,7 +161,7 @@ export async function createTask(data: Partial<Task>, userId: number): Promise<T
       title,
       description || null,
       priority || 'MEDIUM',
-      status || 'TODO',
+      'TODO',
       due_date || null,
       userId,
       assigned_to || null,
@@ -155,6 +181,9 @@ export async function updateTask(
   await ensureCanEditTask(id, userId);
 
   const { project_id, title, description, priority, status, due_date, assigned_to } = data;
+  if (status !== undefined && status !== currentTask.status) {
+    await ensureCanChangeTaskStatus(id, userId, status);
+  }
   const targetProjectId = Number(project_id ?? currentTask.project_id);
   const targetAssignee = assigned_to === undefined ? currentTask.assigned_to : assigned_to;
   await ensureCanCreateTask(targetProjectId, userId, targetAssignee);
@@ -200,7 +229,7 @@ export async function patchTaskStatus(
   userId: number
 ): Promise<TaskRow> {
   await getTaskById(id, userId);
-  await ensureCanEditTask(id, userId);
+  await ensureCanChangeTaskStatus(id, userId, status);
   await pool.query('UPDATE tasks SET status = ? WHERE id = ?', [status, id]);
   return getTaskById(id, userId);
 }
@@ -216,7 +245,7 @@ export async function deleteTask(id: number, userId: number): Promise<void> {
 export async function getTasksByProject(projectId: number, userId: number): Promise<TaskRow[]> {
   const [rows] = await pool.query<TaskRow[]>(
     baseTaskQuery() + ' WHERE t.project_id = ? AND (p.created_by = ? OR EXISTS (SELECT 1 FROM project_members pm WHERE pm.project_id = p.id AND pm.user_id = ?)) ORDER BY t.created_at DESC',
-    [projectId, userId, userId]
+    [userId, userId, projectId, userId, userId]
   );
   return rows;
 }

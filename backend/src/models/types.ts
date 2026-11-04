@@ -20,6 +20,7 @@ export interface Project {
   end_date?: string | null;
   status: 'PLANNING' | 'ACTIVE' | 'COMPLETED' | 'ON_HOLD';
   created_by: number;
+  current_user_project_role?: 'MANAGER' | 'MEMBER' | 'VIEWER';
   created_at: Date;
   updated_at: Date;
 }
@@ -34,6 +35,7 @@ export interface Task {
   due_date?: string | null;
   created_by: number;
   assigned_to?: number | null;
+  current_user_project_role?: 'MANAGER' | 'MEMBER' | 'VIEWER';
   created_at: Date;
   updated_at: Date;
 }

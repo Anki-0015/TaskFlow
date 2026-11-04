@@ -19,6 +19,7 @@ export interface Project {
   end_date?: string | null;
   status: 'PLANNING' | 'ACTIVE' | 'COMPLETED' | 'ON_HOLD';
   created_by: number;
+  current_user_project_role?: 'MANAGER' | 'MEMBER' | 'VIEWER';
   creator_name?: string;
   task_count?: number;
   completed_count?: number;
@@ -27,7 +28,13 @@ export interface Project {
   members?: ProjectMember[];
 }
 
-export interface ProjectMember { id: number; name: string; username: string; role: 'OWNER' | 'MANAGER' | 'MEMBER' | 'VIEWER'; }
+export interface ProjectMember {
+  id: number;
+  name: string;
+  username: string;
+  role: 'MANAGER' | 'MEMBER' | 'VIEWER';
+  is_owner?: boolean;
+}
 
 export interface ProjectInvitation {
   id: number;
@@ -53,6 +60,7 @@ export interface Task {
   project_name?: string;
   creator_name?: string;
   assignee_name?: string | null;
+  current_user_project_role?: 'MANAGER' | 'MEMBER' | 'VIEWER';
   created_at: string;
   updated_at: string;
 }

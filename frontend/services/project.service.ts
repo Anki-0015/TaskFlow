@@ -31,7 +31,7 @@ export const ProjectService = {
     const { data } = await api.get<ApiResponse<DashboardStats>>('/projects/stats/dashboard');
     return data;
   },
-  async addMember(id: number, email: string, role: Exclude<ProjectMember['role'], 'OWNER'>): Promise<ApiResponse<{ id: number }>> {
+  async addMember(id: number, email: string, role: ProjectMember['role']): Promise<ApiResponse<{ id: number }>> {
     const { data } = await api.post<ApiResponse<{ id: number }>>(`/projects/${id}/members`, { email, role }); return data;
   },
   async getInvitations(): Promise<ApiResponse<ProjectInvitation[]>> {

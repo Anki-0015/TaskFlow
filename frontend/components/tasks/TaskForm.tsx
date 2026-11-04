@@ -19,6 +19,7 @@ interface TaskFormProps {
   projects: Project[];
   defaultProjectId?: number;
   members?: ProjectMember[];
+  allowProjectSelection?: boolean;
 }
 
 function getFormValues(initial: TaskFormProps['initial'], defaultProjectId: number | undefined, projects: Project[]) {
@@ -51,6 +52,7 @@ export default function TaskForm({
   projects,
   defaultProjectId,
   members = [],
+  allowProjectSelection = true,
 }: TaskFormProps) {
   const isEdit = Boolean(initial);
 
@@ -109,7 +111,7 @@ export default function TaskForm({
         title:       form.title.trim(),
         description: form.description || undefined,
         priority:    form.priority as Task['priority'],
-        status:      form.status as Task['status'],
+        status:      isEdit ? form.status as Task['status'] : 'TODO',
         due_date:    form.due_date || null,
         assigned_to: form.assigned_to ? Number(form.assigned_to) : null,
       };
@@ -144,17 +146,27 @@ export default function TaskForm({
     { value: 'IN_PROGRESS', label: 'In Progress' },
     { value: 'COMPLETED',   label: 'Completed'   },
   ];
+  const currentStatusOption = statusOptions.find((option) => option.value === form.status) || statusOptions[0];
+  const editableStatusOptions = !isEdit
+    ? [{ value: 'TODO', label: 'To Do' }]
+    : initial?.current_user_project_role === 'MANAGER'
+      ? statusOptions
+      : initial?.current_user_project_role === 'MEMBER'
+        ? statusOptions.filter((option) => option.value === 'IN_PROGRESS' || option.value === form.status)
+        : [currentStatusOption];
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={isEdit ? 'Edit Task' : 'New Task'}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Select
-          id="task-project"
-          label="Project *"
-          value={form.project_id}
-          options={projectOptions}
-          onChange={(e) => handleChange('project_id', e.target.value)}
-        />
+        {allowProjectSelection && (
+          <Select
+            id="task-project"
+            label="Project *"
+            value={form.project_id}
+            options={projectOptions}
+            onChange={(e) => handleChange('project_id', e.target.value)}
+          />
+        )}
         <Input
           id="task-title"
           label="Task Title *"
@@ -183,7 +195,8 @@ export default function TaskForm({
             id="task-status"
             label="Status"
             value={form.status}
-            options={statusOptions}
+            options={editableStatusOptions}
+            disabled={!isEdit || !initial?.current_user_project_role || initial.current_user_project_role === 'VIEWER'}
             onChange={(e) => handleChange('status', e.target.value)}
           />
         </div>

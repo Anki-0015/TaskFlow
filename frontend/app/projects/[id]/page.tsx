@@ -18,6 +18,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { formatDate } from '@/utils/date';
+import { getNextTaskStatus, getTaskStatusActionLabel } from '@/utils/taskPermissions';
 
 interface Params { id: string }
 
@@ -103,7 +104,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<Params> 
   }
 
   async function toggleStatus(task: Task) {
-    const next = task.status === 'COMPLETED' ? 'TODO' : 'COMPLETED';
+    const next = getNextTaskStatus(task);
+    if (!next) return;
     try {
       const res = await TaskService.updateStatus(task.id, next);
       if (res.success) setTasks((prev) => prev.map((t) => (t.id === task.id ? res.data! : t)));
@@ -228,17 +230,17 @@ export default function ProjectDetailPage({ params }: { params: Promise<Params> 
                   <div className="px-4 py-3 flex items-center gap-3">
                     {/* Checkbox */}
                     <button
-                      disabled={!canEditTasks}
+                      disabled={!getNextTaskStatus(task)}
                       onClick={() => toggleStatus(task)}
-                      aria-label={`${task.status === 'COMPLETED' ? 'Reopen' : 'Complete'} ${task.title}`}
-                      aria-pressed={task.status === 'COMPLETED'}
+                      aria-label={getTaskStatusActionLabel(task)}
                       className={`flex-shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
-                        task.status === 'COMPLETED'
+                        task.status === 'COMPLETED' && task.current_user_project_role === 'MANAGER'
                           ? 'bg-green-500 border-green-500 text-white'
                           : 'border-gray-300 hover:border-blue-400'
-                      }`}
+                      } disabled:cursor-not-allowed disabled:opacity-50`}
                     >
-                      {task.status === 'COMPLETED' && <span className="text-[10px] font-bold">✓</span>}
+                      {task.status === 'COMPLETED' && task.current_user_project_role === 'MANAGER' && <span className="text-[10px] font-bold">✓</span>}
+                      {task.current_user_project_role === 'MEMBER' && task.status !== 'IN_PROGRESS' && <span className="text-[10px] font-bold">→</span>}
                     </button>
 
                     {/* Priority dot */}
@@ -320,6 +322,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<Params> 
           projects={[project]}
           defaultProjectId={project.id}
           members={members}
+          allowProjectSelection={false}
         />
       )}
 

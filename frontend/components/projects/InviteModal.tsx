@@ -31,7 +31,6 @@ const ROLE_META: Record<Role, { label: string; description: string }> = {
 };
 
 const ROLE_COLORS: Record<string, string> = {
-  OWNER:   'text-amber-700 bg-amber-50 border-amber-200',
   MANAGER: 'text-purple-600 bg-purple-50 border-purple-200',
   MEMBER:  'text-blue-600 bg-blue-50 border-blue-200',
   VIEWER:  'text-gray-600 bg-gray-50 border-gray-200',
@@ -221,8 +220,8 @@ export default function InviteModal({
     [projectId, members, onMembersChange]
   );
 
-  const ownerMember    = members.find((m) => m.role === 'OWNER');
-  const nonOwnerMembers = members.filter((m) => m.role !== 'OWNER');
+  const ownerMember    = members.find((m) => m.is_owner);
+  const nonOwnerMembers = members.filter((m) => !m.is_owner);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Invite people to project" size="lg">
