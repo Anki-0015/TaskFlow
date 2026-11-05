@@ -139,7 +139,7 @@ export default function ProjectForm({ isOpen, onClose, onSuccess, initial }: Pro
           id="proj-status"
           label="Status"
           value={form.status}
-          options={statusOptions}
+          options={isEdit ? statusOptions : statusOptions.filter((option) => option.value !== 'COMPLETED')}
           onChange={(e) => handleChange('status', e.target.value)}
         />
 

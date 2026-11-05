@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import * as ProjectController from '../controllers/project.controller';
+import * as ChatController from '../controllers/chat.controller';
 import { authenticate } from '../middleware/auth';
 
 const router = Router();
@@ -11,6 +12,8 @@ router.get('/stats/dashboard', ProjectController.getDashboardStats);
 router.get('/invitations/inbox', ProjectController.getProjectInvitations);
 router.patch('/invitations/:invitationId', ProjectController.respondToProjectInvitation);
 router.get('/:id/members', ProjectController.getProjectMembers);
+router.get('/:id/messages', ChatController.getProjectMessages);
+router.post('/:id/messages', ChatController.sendProjectMessage);
 router.post('/:id/members', ProjectController.addProjectMember);
 router.delete('/:id/members/:memberId', ProjectController.removeProjectMember);
 router.get('/',                ProjectController.getProjects);

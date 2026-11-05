@@ -39,6 +39,11 @@ export async function createProject(req: Request, res: Response): Promise<void> 
       res.status(400).json({ success: false, message: 'Project name is required.' });
       return;
     }
+    const allowedInitialStatuses = ['PLANNING', 'ACTIVE', 'ON_HOLD'];
+    if (status != null && !allowedInitialStatuses.includes(status)) {
+      res.status(400).json({ success: false, message: 'New projects must start as Planning, Active, or On Hold.' });
+      return;
+    }
     const project = await ProjectService.createProject(
       { name, description, start_date, end_date, status },
       req.user!.id

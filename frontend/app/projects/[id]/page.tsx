@@ -11,6 +11,7 @@ import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import ProjectForm from '@/components/projects/ProjectForm';
 import InviteModal from '@/components/projects/InviteModal';
+import ProjectChat from '@/components/projects/ProjectChat';
 import TaskForm from '@/components/tasks/TaskForm';
 import { ConfirmDialog } from '@/components/ui/Modal';
 import { showToast } from '@/components/ui/Toast';
@@ -49,6 +50,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<Params> 
   const [showEdit, setShowEdit] = useState(false);
   const [showTask, setShowTask] = useState(false);
   const [showInvite, setShowInvite] = useState(false);
+  const [activeProjectTab, setActiveProjectTab] = useState<'tasks' | 'chat'>('tasks');
   const [editTask, setEditTask] = useState<Task | null>(null);
   const [delProject, setDelProject] = useState(false);
   const [delTask,     setDelTask]    = useState<Task | null>(null);
@@ -210,77 +212,91 @@ export default function ProjectDetailPage({ params }: { params: Promise<Params> 
             </div>
           </Card>
 
-          {/* Tasks section */}
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-gray-900">Tasks ({tasks.length})</h3>
-            {canEditTasks && <Button size="sm" onClick={() => { setEditTask(null); setShowTask(true); }}>＋ Add task</Button>}
+          <div role="tablist" aria-label="Project workspace tabs" className="flex gap-1 border-b border-gray-200">
+            <button
+              id="project-tasks-tab"
+              type="button"
+              role="tab"
+              aria-selected={activeProjectTab === 'tasks'}
+              aria-controls="project-tasks-panel"
+              onClick={() => setActiveProjectTab('tasks')}
+              className={`-mb-px border-b-2 px-4 py-3 text-sm font-semibold transition-colors ${activeProjectTab === 'tasks' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-800'}`}
+            >
+              Tasks <span className="ml-1 text-xs">({tasks.length})</span>
+            </button>
+            <button
+              id="project-chat-tab"
+              type="button"
+              role="tab"
+              aria-selected={activeProjectTab === 'chat'}
+              aria-controls="project-chat-panel"
+              onClick={() => setActiveProjectTab('chat')}
+              className={`-mb-px border-b-2 px-4 py-3 text-sm font-semibold transition-colors ${activeProjectTab === 'chat' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-800'}`}
+            >
+              Group Chat
+            </button>
           </div>
 
-          {tasks.length === 0 ? (
-            <EmptyState
-              icon="check"
-              title="No tasks yet"
-              description="Add tasks to this project."
-              action={canEditTasks ? <Button size="sm" onClick={() => setShowTask(true)}>Add task</Button> : undefined}
-            />
-          ) : (
-            <div className="space-y-2">
-              {tasks.map((task) => (
-                <Card key={task.id} className="group">
-                  <div className="px-4 py-3 flex items-center gap-3">
-                    {/* Checkbox */}
-                    <button
-                      disabled={!getNextTaskStatus(task)}
-                      onClick={() => toggleStatus(task)}
-                      aria-label={getTaskStatusActionLabel(task)}
-                      className={`flex-shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
-                        task.status === 'COMPLETED' && task.current_user_project_role === 'MANAGER'
-                          ? 'bg-green-500 border-green-500 text-white'
-                          : 'border-gray-300 hover:border-blue-400'
-                      } disabled:cursor-not-allowed disabled:opacity-50`}
-                    >
-                      {task.status === 'COMPLETED' && task.current_user_project_role === 'MANAGER' && <span className="text-[10px] font-bold">✓</span>}
-                      {task.current_user_project_role === 'MEMBER' && task.status !== 'IN_PROGRESS' && <span className="text-[10px] font-bold">→</span>}
-                    </button>
+          {activeProjectTab === 'tasks' ? (
+            <section id="project-tasks-panel" role="tabpanel" aria-labelledby="project-tasks-tab" className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-gray-900">Project tasks</h3>
+                {canEditTasks && <Button size="sm" onClick={() => { setEditTask(null); setShowTask(true); }}>＋ Add task</Button>}
+              </div>
 
-                    {/* Priority dot */}
-                    <span className={`flex-shrink-0 w-2 h-2 rounded-full ${priorityDot[task.priority]}`} />
+              {tasks.length === 0 ? (
+                <EmptyState
+                  icon="check"
+                  title="No tasks yet"
+                  description="Add tasks to this project."
+                  action={canEditTasks ? <Button size="sm" onClick={() => setShowTask(true)}>Add task</Button> : undefined}
+                />
+              ) : (
+                <div className="space-y-2">
+                  {tasks.map((task) => (
+                    <Card key={task.id} className="group">
+                      <div className="px-4 py-3 flex items-center gap-3">
+                        <button
+                          disabled={!getNextTaskStatus(task)}
+                          onClick={() => toggleStatus(task)}
+                          aria-label={getTaskStatusActionLabel(task)}
+                          className={`flex-shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
+                            task.status === 'COMPLETED' && task.current_user_project_role === 'MANAGER'
+                              ? 'bg-green-500 border-green-500 text-white'
+                              : 'border-gray-300 hover:border-blue-400'
+                          } disabled:cursor-not-allowed disabled:opacity-50`}
+                        >
+                          {task.status === 'COMPLETED' && task.current_user_project_role === 'MANAGER' && <span className="text-[10px] font-bold">✓</span>}
+                          {task.current_user_project_role === 'MEMBER' && task.status !== 'IN_PROGRESS' && <span className="text-[10px] font-bold">→</span>}
+                        </button>
 
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-medium ${task.status === 'COMPLETED' ? 'line-through text-gray-400' : 'text-gray-900'}`}>
-                        {task.title}
-                      </p>
-                      <div className="flex flex-wrap gap-2 mt-0.5 text-xs text-gray-400">
-                        <Badge label={task.status} />
-                        <Badge label={task.priority} />
-                        {task.due_date && <span>Due: {formatDate(task.due_date)}</span>}
-                        {task.assignee_name && <span>→ {task.assignee_name}</span>}
+                        <span className={`flex-shrink-0 w-2 h-2 rounded-full ${priorityDot[task.priority]}`} />
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm font-medium ${task.status === 'COMPLETED' ? 'line-through text-gray-400' : 'text-gray-900'}`}>
+                            {task.title}
+                          </p>
+                          <div className="flex flex-wrap gap-2 mt-0.5 text-xs text-gray-400">
+                            <Badge label={task.status} />
+                            <Badge label={task.priority} />
+                            {task.due_date && <span>Due: {formatDate(task.due_date)}</span>}
+                            {task.assignee_name && <span>→ {task.assignee_name}</span>}
+                          </div>
+                        </div>
+
+                        {canEditTasks && <div className="flex-shrink-0 flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity">
+                          <Button variant="ghost" size="sm" onClick={() => { setEditTask(task); setShowTask(true); }}>Edit</Button>
+                          <Button variant="ghost" size="sm" className="text-red-500 hover:bg-red-50" onClick={() => setDelTask(task)}>✕</Button>
+                        </div>}
                       </div>
-                    </div>
-
-                    {/* Actions */}
-                    {canEditTasks && <div className="flex-shrink-0 flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => { setEditTask(task); setShowTask(true); }}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-red-500 hover:bg-red-50"
-                        onClick={() => setDelTask(task)}
-                      >
-                        ✕
-                      </Button>
-                    </div>}
-                  </div>
-                </Card>
-              ))}
-            </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </section>
+          ) : (
+            <section id="project-chat-panel" role="tabpanel" aria-labelledby="project-chat-tab">
+              <ProjectChat projectId={project.id} projectName={project.name} />
+            </section>
           )}
         </div>
       )}

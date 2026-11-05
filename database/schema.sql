@@ -61,6 +61,18 @@ CREATE TABLE IF NOT EXISTS project_invitations (
   INDEX idx_project_invitations_inbox (invited_user_id, status, created_at)
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS project_messages (
+  id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  project_id INT UNSIGNED NOT NULL,
+  user_id    INT UNSIGNED NOT NULL,
+  body       VARCHAR(2000) NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  CONSTRAINT fk_project_messages_project FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  CONSTRAINT fk_project_messages_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_project_messages_project_id_id (project_id, id)
+) ENGINE=InnoDB;
+
 
 
 CREATE TABLE IF NOT EXISTS tasks (

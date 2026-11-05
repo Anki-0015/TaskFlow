@@ -47,6 +47,16 @@ export interface ProjectInvitation {
   invited_by_username: string;
 }
 
+export interface ProjectMessage {
+  id: number;
+  project_id: number;
+  user_id: number;
+  author_name: string;
+  author_username: string;
+  body: string;
+  created_at: string;
+}
+
 export interface Task {
   id: number;
   project_id: number;
