@@ -19,9 +19,9 @@ interface StatCardProps {
 
 function StatCard({ label, value, sub }: StatCardProps) {
   return (
-    <Card className="p-5 sm:p-6">
-      <p className="mb-3 text-xs font-medium text-gray-500">{label}</p>
-      <p className="text-3xl font-semibold tracking-tight text-gray-900">{value ?? 0}</p>
+    <Card className="dashboard-stat p-5 sm:p-6">
+      <p className="mb-3 text-[10px] font-bold uppercase tracking-[.14em] text-gray-500">{label}</p>
+      <p className="text-3xl font-bold tracking-[-.04em] text-gray-900 sm:text-[34px]">{value ?? 0}</p>
       {sub && <p className="mt-2 text-xs text-gray-400">{sub}</p>}
     </Card>
   );
@@ -56,17 +56,19 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout title="Dashboard">
-      <div className="animate-fade-in space-y-8">
+      <div className="animate-fade-in space-y-7 sm:space-y-8">
         {/* Welcome */}
-        <div className="flex flex-col gap-5 rounded-2xl border border-gray-200 bg-white px-6 py-6 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-8">
+        <div className="dashboard-hero flex flex-col gap-6 rounded-[28px] px-6 py-7 sm:flex-row sm:items-center sm:justify-between sm:px-9 sm:py-9">
           <div>
-            <p className="mb-2 text-sm font-medium text-blue-700">Workspace overview</p>
-            <h2 className="text-2xl font-semibold tracking-tight text-gray-900">Good to see you, {user?.name?.split(' ')[0]}.</h2>
+            <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[.14em] text-blue-700">
+              <span className="h-1.5 w-1.5 rounded-full bg-blue-600" /> Workspace overview
+            </p>
+            <h2 className="text-2xl font-bold tracking-[-.04em] text-gray-900 sm:text-3xl">Good to see you, {user?.name?.split(' ')[0]}.</h2>
             <p className="mt-2 max-w-xl text-sm leading-6 text-gray-500">Review project status and pick up where you left off.</p>
           </div>
           <div className="flex shrink-0 flex-wrap gap-2">
-            <Link href="/tasks" className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700">View tasks</Link>
-            <Link href="/projects" className="rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50">Browse projects</Link>
+            <Link href="/tasks" className="button-primary inline-flex min-h-11 items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold transition">View tasks</Link>
+            <Link href="/projects" className="button-secondary inline-flex min-h-11 items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold transition">Browse projects</Link>
           </div>
         </div>
 
@@ -82,7 +84,7 @@ export default function DashboardPage() {
         ) : (
           <>
             {/* Stats grid */}
-            <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
               <StatCard label="Total Projects"   value={stats?.projects.total_projects   ?? 0} />
               <StatCard label="Active Projects"  value={stats?.projects.active_projects  ?? 0} />
               <StatCard label="Total Tasks"      value={stats?.tasks.total_tasks         ?? 0} />
@@ -90,7 +92,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Second row */}
-            <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4 xl:grid-cols-3">
               <StatCard label="Tasks To-Do"      value={stats?.tasks.todo_tasks         ?? 0} />
               <StatCard label="In Progress"      value={stats?.tasks.in_progress_tasks  ?? 0} />
               <StatCard label="Pending Projects" value={(stats?.projects.planning_projects ?? 0) + (stats?.projects.on_hold_projects ?? 0)} sub="Planning + On Hold" />
@@ -98,9 +100,9 @@ export default function DashboardPage() {
 
             {/* Recent projects */}
             <Card>
-              <div className="px-5 py-5 border-b border-gray-100 flex items-center justify-between sm:px-6">
-                <div><h3 className="text-base font-semibold text-gray-900">Recent projects</h3><p className="mt-1 text-xs text-gray-500">Projects in your workspace</p></div>
-                <Link href="/projects" className="text-xs font-semibold text-blue-600 hover:underline">
+              <div className="flex items-center justify-between border-b border-gray-100 px-5 py-5 sm:px-6">
+                <div><h3 className="text-base font-bold tracking-tight text-gray-900">Recent projects</h3><p className="mt-1 text-xs text-gray-500">Projects in your workspace</p></div>
+                <Link href="/projects" className="text-xs font-semibold text-blue-600 transition hover:text-blue-700 hover:underline">
                   View all →
                 </Link>
               </div>
@@ -110,15 +112,15 @@ export default function DashboardPage() {
                   <Link href="/projects" className="font-medium text-blue-600 hover:underline">Create your first project</Link>
                 </div>
               ) : (
-                <div className="divide-y divide-gray-50">
+                <div className="divide-y divide-gray-100">
                   {projects.map((p) => (
                     <Link
                       key={p.id}
                       href={`/projects/${p.id}`}
-                      className="flex items-center justify-between px-5 py-3 hover:bg-gray-50 transition-colors"
+                      className="dashboard-project-row flex items-center justify-between px-5 py-4 transition-colors sm:px-6"
                     >
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{p.name}</p>
+                        <p className="text-sm font-semibold text-gray-900">{p.name}</p>
                         <p className="text-xs text-gray-500">
                           {p.task_count ?? 0} tasks · {p.completed_count ?? 0} completed
                         </p>

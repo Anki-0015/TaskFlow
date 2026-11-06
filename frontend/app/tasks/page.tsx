@@ -115,14 +115,15 @@ export default function TasksPage() {
 
   return (
     <DashboardLayout title="Tasks">
-      <div className="animate-fade-in space-y-6">
+      <div className="animate-fade-in space-y-7">
         {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="page-intro flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="mt-1 text-2xl font-semibold tracking-tight text-gray-900">All tasks</h2>
-            <p className="mt-1 text-sm text-gray-500">{tasks.length} matching task{tasks.length !== 1 ? 's' : ''}</p>
+            <p className="page-eyebrow">Stay on track</p>
+            <h2 className="page-title">All tasks</h2>
+            <p className="page-description">{tasks.length} matching task{tasks.length !== 1 ? 's' : ''}</p>
           </div>
-          {taskableProjects.length > 0 && <Button onClick={() => { setEditing(null); setShowForm(true); }}><span aria-hidden="true">＋</span> New task</Button>}
+          {taskableProjects.length > 0 && <Button size="lg" className="self-end sm:self-auto" onClick={() => { setEditing(null); setShowForm(true); }}><span aria-hidden="true">＋</span> New task</Button>}
         </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -131,15 +132,15 @@ export default function TasksPage() {
             { label: 'In progress', value: inProgressCount, color: 'text-blue-700' },
             { label: 'Completed', value: completedCount, color: 'text-green-700' },
           ].map((item) => (
-            <Card key={item.label} className="flex min-h-[88px] flex-col justify-center px-4 py-3">
-              <p className="text-xs text-gray-500">{item.label}</p>
-              <p className={`mt-1 text-xl font-semibold ${item.color}`}>{item.value}</p>
+            <Card key={item.label} className="dashboard-stat flex min-h-[96px] flex-col justify-center px-5 py-4">
+              <p className="text-[10px] font-bold uppercase tracking-[.14em] text-gray-500">{item.label}</p>
+              <p className={`mt-1.5 text-2xl font-bold tracking-tight ${item.color}`}>{item.value}</p>
             </Card>
           ))}
         </div>
 
         {/* Filters */}
-        <Card className="p-4 sm:p-5">
+        <Card className="filter-panel p-4 sm:p-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <Input
               id="task-search"
@@ -183,12 +184,12 @@ export default function TasksPage() {
             {groupedTasks.filter((group) => group.tasks.length > 0).map((group) => (
               <section key={group.status} aria-labelledby={`task-group-${group.status}`} className="space-y-2">
                 <div className="flex items-center justify-between px-1">
-                  <h3 id={`task-group-${group.status}`} className="text-sm font-semibold text-gray-800">{group.label}</h3>
-                  <span className="text-xs text-gray-400">{group.tasks.length}</span>
+                  <h3 id={`task-group-${group.status}`} className="text-xs font-bold uppercase tracking-[.14em] text-gray-500">{group.label}</h3>
+                  <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-semibold text-gray-500">{group.tasks.length}</span>
                 </div>
                 {group.tasks.map((task) => (
-              <Card key={task.id} className="group">
-                <div className="px-4 py-4 flex items-start gap-3">
+              <Card key={task.id} className="task-row group">
+                <div className="flex items-start gap-3 px-4 py-4 sm:px-5">
                   {/* Checkbox */}
                   <button
                     disabled={!getNextTaskStatus(task)}

@@ -31,7 +31,7 @@ const ROLE_META: Record<Role, { label: string; description: string }> = {
 };
 
 const ROLE_COLORS: Record<string, string> = {
-  MANAGER: 'text-purple-600 bg-purple-50 border-purple-200',
+  MANAGER: 'text-blue-700 bg-blue-50 border-blue-200',
   MEMBER:  'text-blue-600 bg-blue-50 border-blue-200',
   VIEWER:  'text-gray-600 bg-gray-50 border-gray-200',
 };
@@ -334,7 +334,7 @@ export default function InviteModal({
               id="invite-send-btn"
               onClick={sendInvites}
               disabled={sending || (pendingInvites.length === 0 && !inputValue.trim())}
-              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {sending && <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />}
               {sending ? 'Sending…' : 'Send invitations'}

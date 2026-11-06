@@ -133,56 +133,56 @@ export default function ProjectDetailPage({ params }: { params: Promise<Params> 
           <Link href="/projects"><Button variant="secondary">Back to Projects</Button></Link>
         } />
       ) : (
-        <div className="animate-fade-in space-y-5">
+        <div className="animate-fade-in space-y-6">
           {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-sm text-gray-500">
+          <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
             <Link href="/projects" className="hover:text-blue-600">Projects</Link>
             <span>/</span>
             <span className="text-gray-900 font-medium">{project.name}</span>
           </div>
 
           {/* Project header card */}
-          <Card>
-            <div className="px-5 py-5 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <Card className="project-overview overflow-hidden">
+            <div className="flex flex-col justify-between gap-5 px-5 py-6 sm:flex-row sm:items-start sm:px-7 sm:py-7">
               <div className="flex-1">
                 <div className="flex items-center gap-3 flex-wrap">
-                  <h2 className="text-lg font-bold text-gray-900">{project.name}</h2>
+                  <h2 className="text-xl font-bold tracking-tight text-gray-900 sm:text-2xl">{project.name}</h2>
                   <Badge label={project.status} />
                 </div>
                 {project.description && (
                   <p className="text-sm text-gray-500 mt-2">{project.description}</p>
                 )}
-                <div className="mt-3 flex items-center gap-2 text-xs text-gray-500">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-50 font-semibold text-blue-700" aria-hidden="true">
+                <div className="mt-4 flex items-center gap-2 text-xs text-gray-500">
+                  <span className="brand-mark flex h-8 w-8 items-center justify-center rounded-full text-[10px] font-semibold text-white" aria-hidden="true">
                     {(project.creator_name || 'U').split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase()}
                   </span>
                   <span>Created by <strong className="font-medium text-gray-700">{project.creator_name || 'Unknown'}</strong></span>
                 </div>
-                <div className="flex flex-wrap gap-4 mt-3 text-xs text-gray-400">
+                <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-xs text-gray-500">
                   {project.start_date && <span>Start date: {formatDate(project.start_date)}</span>}
                   {project.end_date   && <span>End date: {formatDate(project.end_date)}</span>}
                   <span>Tasks: {tasks.length} · Done: {tasks.filter(t => t.status === 'COMPLETED').length}</span>
                 </div>
               </div>
-              {canManageProject && <div className="flex gap-2">
+              {canManageProject && <div className="flex flex-wrap gap-2">
                 <Button variant="secondary" size="sm" onClick={() => setShowEdit(true)}>Edit</Button>
                 <Button variant="danger" size="sm" onClick={() => setDelProject(true)}>Delete</Button>
               </div>}
             </div>
-            <div className="border-t border-gray-100 px-5 py-4">
-              <div className="mb-2 flex justify-between text-xs"><span className="font-medium text-gray-600">Project progress</span><span className="font-semibold text-gray-800">{progress}%</span></div>
-              <div className="h-2 overflow-hidden rounded-full bg-gray-100"><div className="h-full rounded-full bg-blue-500 transition-all" style={{ width: `${progress}%` }} /></div>
+            <div className="border-t border-gray-100 bg-gray-50/70 px-5 py-4 sm:px-7">
+              <div className="mb-2 flex justify-between text-[11px]"><span className="font-semibold uppercase tracking-[.1em] text-gray-500">Project progress</span><span className="font-bold text-gray-800">{progress}%</span></div>
+              <div className="h-2 overflow-hidden rounded-full bg-gray-200"><div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all" style={{ width: `${progress}%` }} /></div>
             </div>
           </Card>
 
-          <Card>
+          <Card className="project-team">
             <div className="px-5 py-4">
-              <div className="mb-4 flex items-center justify-between">
+              <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900">Project team</h3>
+                  <h3 className="text-sm font-bold tracking-tight text-gray-900">Project team</h3>
                   <p className="text-xs text-gray-500">People with access to this project.</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <Badge label={`${members.length} member${members.length !== 1 ? 's' : ''}`} />
                   {canManageProject && (
                     <Button size="sm" onClick={() => setShowInvite(true)} id="invite-people-btn">
@@ -197,7 +197,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<Params> 
               </div>
               <div className="flex flex-wrap gap-2">
                 {members.map((member) => (
-                  <div key={member.id} className="flex items-center gap-2 rounded-xl bg-gray-50 px-3 py-2">
+                  <div key={member.id} className="team-member-chip flex items-center gap-2 rounded-2xl border border-gray-100 bg-gray-50 px-3 py-2">
                     <MemberAvatar name={member.name} />
                     <span>
                       <span className="block text-xs font-medium text-gray-900">{member.name}</span>
@@ -212,7 +212,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<Params> 
             </div>
           </Card>
 
-          <div role="tablist" aria-label="Project workspace tabs" className="flex gap-1 border-b border-gray-200">
+          <div role="tablist" aria-label="Project workspace tabs" className="project-tablist inline-flex max-w-full flex-wrap gap-1">
             <button
               id="project-tasks-tab"
               type="button"
@@ -220,7 +220,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<Params> 
               aria-selected={activeProjectTab === 'tasks'}
               aria-controls="project-tasks-panel"
               onClick={() => setActiveProjectTab('tasks')}
-              className={`-mb-px border-b-2 px-4 py-3 text-sm font-semibold transition-colors ${activeProjectTab === 'tasks' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-800'}`}
+              className="project-tab px-4 py-2.5 text-sm font-semibold transition-colors"
             >
               Tasks <span className="ml-1 text-xs">({tasks.length})</span>
             </button>
@@ -231,7 +231,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<Params> 
               aria-selected={activeProjectTab === 'chat'}
               aria-controls="project-chat-panel"
               onClick={() => setActiveProjectTab('chat')}
-              className={`-mb-px border-b-2 px-4 py-3 text-sm font-semibold transition-colors ${activeProjectTab === 'chat' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-800'}`}
+              className="project-tab px-4 py-2.5 text-sm font-semibold transition-colors"
             >
               Group Chat
             </button>
@@ -254,7 +254,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<Params> 
               ) : (
                 <div className="space-y-2">
                   {tasks.map((task) => (
-                    <Card key={task.id} className="group">
+                    <Card key={task.id} className="task-row group">
                       <div className="px-4 py-3 flex items-center gap-3">
                         <button
                           disabled={!getNextTaskStatus(task)}

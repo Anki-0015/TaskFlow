@@ -63,26 +63,26 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         id="workspace-sidebar"
         aria-label="Workspace navigation"
         className={`
-          app-sidebar fixed inset-y-0 left-0 z-40 flex w-[260px] shrink-0 flex-col border-r
+          app-sidebar fixed inset-y-0 left-0 z-40 flex w-[272px] shrink-0 flex-col border-r
           transition-transform duration-200 ease-out
           ${open ? 'translate-x-0' : '-translate-x-full'}
           lg:sticky lg:top-0 lg:bottom-auto lg:h-dvh lg:translate-x-0
         `}
       >
-        <div className="px-5 pb-7 pt-6">
+        <div className="px-5 pb-8 pt-6">
           <Link href="/dashboard" onClick={onClose} className="group flex items-center gap-3 rounded-xl focus-visible:outline-none">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 transition-colors group-hover:bg-blue-700">
+            <div className="brand-mark flex h-11 w-11 items-center justify-center rounded-[15px] transition-transform duration-200 group-hover:rotate-[-4deg] group-hover:scale-105">
               <span className="text-xs font-bold tracking-tight text-white">TF</span>
             </div>
             <div className="min-w-0">
-              <span className="block text-[15px] font-semibold tracking-tight text-gray-900">TaskFlow</span>
-              <span className="block text-xs text-gray-500">Project workspace</span>
+              <span className="block text-[15px] font-bold tracking-tight text-gray-900">TaskFlow</span>
+              <span className="block text-[11px] font-medium text-gray-500">Project workspace</span>
             </div>
           </Link>
         </div>
 
-        <div className="workspace-label px-5 pb-2 text-[10px] font-semibold uppercase tracking-[.16em]">Workspace</div>
-        <nav aria-label="Main navigation" className="flex-1 space-y-1 overflow-y-auto px-3 py-2">
+        <div className="workspace-label px-5 pb-2 text-[10px] font-bold uppercase tracking-[.18em]">Workspace</div>
+        <nav aria-label="Main navigation" className="flex-1 space-y-1.5 overflow-y-auto px-3 py-2">
           {nav.map((item) => {
             const active = pathname === item.href || pathname.startsWith(item.href + '/');
             return (
@@ -91,7 +91,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                 href={item.href}
                 onClick={onClose}
                 aria-current={active ? 'page' : undefined}
-                className={`workspace-nav-link flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors duration-150 ${active ? 'workspace-nav-link-active font-semibold' : ''}`}
+                className={`workspace-nav-link flex items-center gap-3 rounded-xl px-3 py-3 text-[13px] font-medium transition-all duration-150 ${active ? 'workspace-nav-link-active font-semibold' : ''}`}
               >
                 <span className="flex w-5 items-center justify-center"><NavIcon name={item.icon} /></span>
                 {item.label}
@@ -107,8 +107,8 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 
         <div className="border-t border-gray-100 px-3 py-4">
           {user && (
-            <div className="user-chip mb-2 flex items-center gap-3 rounded-xl px-3 py-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-sm font-semibold text-blue-700">
+            <div className="user-chip mb-2 flex items-center gap-3 rounded-2xl px-3 py-3">
+              <div className="brand-mark flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white">
                 {user.name?.charAt(0).toUpperCase() || '?'}
               </div>
               <div className="flex-1 min-w-0">

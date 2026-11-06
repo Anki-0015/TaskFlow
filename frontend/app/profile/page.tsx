@@ -66,11 +66,16 @@ export default function ProfilePage() {
 
   return (
     <DashboardLayout title="Profile">
-      <div className="animate-fade-in max-w-lg space-y-5">
+      <div className="animate-fade-in max-w-2xl space-y-6">
+        <div className="page-intro">
+          <p className="page-eyebrow">Personal settings</p>
+          <h2 className="page-title">Your profile</h2>
+          <p className="page-description">Update your details and manage your sign-in credentials.</p>
+        </div>
         {/* Avatar / info card */}
-        <Card className="p-5">
+        <Card className="profile-card p-5 sm:p-6">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-lg font-bold text-blue-700">
+            <div className="brand-mark flex h-14 w-14 items-center justify-center rounded-[18px] text-xl font-bold text-white">
               {user?.name?.charAt(0).toUpperCase()}
             </div>
             <div>
@@ -94,7 +99,7 @@ export default function ProfilePage() {
         </Card>
 
         {/* Edit form */}
-        <Card>
+        <Card className="profile-form-card overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-100">
             <h3 className="text-sm font-semibold text-gray-900">Edit Profile</h3>
           </div>

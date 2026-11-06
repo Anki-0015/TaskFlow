@@ -135,7 +135,7 @@ export default function DatePicker({ id, label, value, onChange, min, max, place
         aria-expanded={isOpen}
         aria-controls={`${id}-calendar`}
         onClick={openCalendar}
-        className="group flex w-full items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-left text-sm text-gray-900 shadow-sm transition duration-150 hover:border-blue-300 hover:shadow-md focus-visible:border-blue-500 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/15"
+        className="field-control group flex min-h-12 w-full items-center justify-between gap-3 rounded-xl border px-3.5 py-2.5 text-left text-sm transition duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/15"
       >
         <span className={value ? 'font-medium' : 'text-gray-400'}>{value ? formatDate(value) : placeholder}</span>
         <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="h-5 w-5 shrink-0 text-gray-400 transition-colors group-hover:text-blue-600">
@@ -200,7 +200,7 @@ export default function DatePicker({ id, label, value, onChange, min, max, place
                   onClick={() => chooseDate(date)}
                   className={`mx-auto flex h-9 w-9 items-center justify-center rounded-xl text-sm transition ${
                     isSelected
-                      ? 'bg-blue-600 font-semibold text-white shadow-md shadow-blue-600/25 hover:bg-blue-700'
+                      ? 'bg-blue-600 font-semibold text-white hover:bg-blue-700'
                       : isToday
                         ? 'font-semibold text-blue-700 ring-1 ring-blue-200 hover:bg-blue-50'
                         : isOutsideMonth

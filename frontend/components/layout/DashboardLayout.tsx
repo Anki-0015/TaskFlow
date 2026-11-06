@@ -40,7 +40,7 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <div className="flex h-dvh min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="app-header sticky top-0 z-20 flex h-[68px] shrink-0 items-center gap-4 border-b px-4 backdrop-blur-sm sm:px-6 lg:px-10">
+        <header className="app-header sticky top-0 z-20 flex h-[76px] shrink-0 items-center gap-4 border-b px-4 sm:px-6 lg:px-10">
           <button
             type="button"
             className="menu-button flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-xl transition-colors lg:hidden"
@@ -61,16 +61,16 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
           </button>
           {title && (
             <div className="flex-1 min-w-0">
-              <p className="hidden text-[10px] font-semibold uppercase tracking-[.16em] text-gray-400 sm:block">TaskFlow workspace</p>
-              <h1 className="truncate text-base font-semibold tracking-tight text-gray-900">{title}</h1>
+              <p className="hidden text-[10px] font-bold uppercase tracking-[.18em] text-blue-600 sm:block">TaskFlow workspace</p>
+              <h1 className="truncate text-base font-bold tracking-tight text-gray-900 sm:text-[17px]">{title}</h1>
             </div>
           )}
           {!title && <div className="flex-1" />}
           <ThemeToggle />
         </header>
 
-        <main className="workspace-scroll-region min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
-          <div className="mx-auto w-full max-w-[1320px] pb-8">{children}</div>
+        <main className="workspace-scroll-region min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-7 lg:px-10 lg:py-9">
+          <div className="mx-auto w-full max-w-[1380px] pb-10">{children}</div>
         </main>
       </div>
 

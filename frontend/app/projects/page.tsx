@@ -73,16 +73,17 @@ export default function ProjectsPage() {
 
   return (
     <DashboardLayout title="Projects">
-      <div className="animate-fade-in space-y-6">
+      <div className="animate-fade-in space-y-7">
         {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="page-intro flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="mt-1 text-2xl font-semibold tracking-tight text-gray-900">Your projects</h2>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="page-eyebrow">Project workspace</p>
+            <h2 className="page-title">Your projects</h2>
+            <p className="page-description">
               {loadError ? 'Project list is unavailable right now' : `${projects.length} project${projects.length !== 1 ? 's' : ''} across your workspace`}
             </p>
           </div>
-          <Button onClick={() => setShowForm(true)}><span aria-hidden="true">＋</span> New project</Button>
+          <Button size="lg" className="self-end sm:self-auto" onClick={() => setShowForm(true)}><span aria-hidden="true">＋</span> New project</Button>
         </div>
 
         {/* List */}
@@ -107,25 +108,25 @@ export default function ProjectsPage() {
             {projects.map((p) => (
               <Card
                 key={p.id}
-                className={`relative border-l-4 ${statusColor[p.status] || 'border-l-gray-300'} hover:-translate-y-0.5 hover:shadow-lg`}
+                className={`project-card relative border-l-4 ${statusColor[p.status] || 'border-l-gray-300'}`}
               >
                 <Link href={`/projects/${p.id}`} aria-label={`Open ${p.name}`} className="absolute inset-0 z-0 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500" />
-                <div className="pointer-events-none relative px-5 py-5 flex items-start justify-between gap-4">
+                <div className="pointer-events-none relative flex items-start justify-between gap-4 px-5 py-5 sm:px-6 sm:py-6">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="text-base font-semibold text-gray-900">{p.name}</h3>
+                      <h3 className="text-base font-bold tracking-tight text-gray-900">{p.name}</h3>
                       <Badge label={p.status} />
                     </div>
                     {p.description && (
                       <p className="text-xs text-gray-500 mt-1 line-clamp-1">{p.description}</p>
                     )}
-                    <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
+                    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-gray-500">
                       <span>Created by {p.creator_name || 'Unknown'}</span>
                       {p.start_date && <span>Start: {formatDate(p.start_date)}</span>}
                       {p.end_date   && <span>End: {formatDate(p.end_date)}</span>}
                       <span>{p.task_count ?? 0} tasks · {p.completed_count ?? 0} done</span>
                     </div>
-                    <div className="mt-4 max-w-sm"><div className="mb-1.5 flex justify-between text-[11px] text-gray-500"><span>Progress</span><span>{p.task_count ? Math.round((p.completed_count || 0) / p.task_count * 100) : 0}%</span></div><div className="h-1.5 overflow-hidden rounded-full bg-gray-100"><div className="h-full rounded-full bg-blue-600" style={{ width: `${p.task_count ? Math.round((p.completed_count || 0) / p.task_count * 100) : 0}%` }} /></div></div>
+                    <div className="mt-5 max-w-sm"><div className="mb-2 flex justify-between text-[10px] font-semibold uppercase tracking-[.1em] text-gray-400"><span>Progress</span><span>{p.task_count ? Math.round((p.completed_count || 0) / p.task_count * 100) : 0}%</span></div><div className="h-2 overflow-hidden rounded-full bg-gray-100"><div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all" style={{ width: `${p.task_count ? Math.round((p.completed_count || 0) / p.task_count * 100) : 0}%` }} /></div></div>
                   </div>
                   <div className="pointer-events-auto relative z-10 flex items-center gap-2 flex-shrink-0">
                     <Button

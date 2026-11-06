@@ -6,33 +6,51 @@ interface BadgeProps {
 }
 
 const statusColors: Record<string, string> = {
-  PLANNING:    'bg-yellow-100 text-yellow-800',
-  ACTIVE:      'bg-blue-100 text-blue-800',
-  COMPLETED:   'bg-green-100 text-green-800',
-  ON_HOLD:     'bg-gray-100 text-gray-700',
-  TODO:        'bg-gray-100 text-gray-700',
-  IN_PROGRESS: 'bg-blue-100 text-blue-800',
-  LOW:         'bg-green-100 text-green-800',
-  MEDIUM:      'bg-yellow-100 text-yellow-800',
-  HIGH:        'bg-red-100 text-red-700',
-  PENDING:     'bg-amber-100 text-amber-800',
-  ACCEPTED:    'bg-green-100 text-green-800',
-  DECLINED:    'bg-gray-100 text-gray-700',
-  admin:       'bg-purple-100 text-purple-800',
-  member:      'bg-gray-100 text-gray-700',
+  PLANNING:    'badge-warning',
+  ACTIVE:      'badge-info',
+  COMPLETED:   'badge-success',
+  ON_HOLD:     'badge-neutral',
+  TODO:        'badge-neutral',
+  IN_PROGRESS: 'badge-info',
+  LOW:         'badge-success',
+  MEDIUM:      'badge-warning',
+  HIGH:        'badge-danger',
+  PENDING:     'badge-warning',
+  ACCEPTED:    'badge-success',
+  DECLINED:    'badge-neutral',
+  MANAGER:     'badge-info',
+  MEMBER:      'badge-neutral',
+  VIEWER:      'badge-neutral',
+  admin:       'badge-info',
+  member:      'badge-neutral',
 };
 
 const statusLabels: Record<string, string> = {
-  IN_PROGRESS: 'In Progress',
-  ON_HOLD:     'On Hold',
+  PLANNING: 'Planning',
+  ACTIVE: 'Active',
+  COMPLETED: 'Completed',
+  ON_HOLD: 'On hold',
+  TODO: 'To do',
+  IN_PROGRESS: 'In progress',
+  LOW: 'Low',
+  MEDIUM: 'Medium',
+  HIGH: 'High',
+  PENDING: 'Pending',
+  ACCEPTED: 'Accepted',
+  DECLINED: 'Declined',
+  MANAGER: 'Manager',
+  MEMBER: 'Member',
+  VIEWER: 'Viewer',
+  admin: 'Admin',
+  member: 'Member',
 };
 
 export default function Badge({ label }: BadgeProps) {
-  const colorClass = statusColors[label] || 'bg-gray-100 text-gray-700';
+  const colorClass = statusColors[label] || 'badge-neutral';
   const displayLabel = statusLabels[label] || label;
 
   return (
-    <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${colorClass}`}>
+    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold leading-none tracking-[.01em] ${colorClass}`}>
       {displayLabel}
     </span>
   );

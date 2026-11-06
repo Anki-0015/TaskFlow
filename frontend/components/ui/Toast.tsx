@@ -23,7 +23,7 @@ export function Toast({ message, type, onClose }: ToastProps) {
   const icons = { success: '✓', error: '✕', info: 'ℹ' };
 
   return (
-    <div className={`flex items-center gap-3 px-4 py-3 rounded-lg border shadow-md text-sm animate-fade-in ${colors[type]}`}>
+    <div className={`flex max-w-sm items-center gap-3 rounded-2xl border px-4 py-3.5 text-sm shadow-xl animate-fade-in ${colors[type]}`}>
       <span className="font-bold">{icons[type]}</span>
       <span>{message}</span>
     </div>

@@ -95,13 +95,21 @@ export default function ProjectChat({ projectId, projectName }: ProjectChatProps
   }
 
   return (
-    <Card className="flex flex-col overflow-hidden">
-      <div className="shrink-0 border-b border-gray-100 px-5 py-4">
-        <h3 className="text-sm font-semibold text-gray-900">{projectName} group chat</h3>
-        <p className="mt-1 text-xs text-gray-500">Everyone with access to this project can join the discussion.</p>
+    <Card className="flex min-h-[440px] flex-col overflow-hidden">
+      <div className="chat-header flex shrink-0 items-center gap-3 border-b px-5 py-4 sm:px-6">
+        <span className="chat-empty-icon flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl" aria-hidden="true">
+          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5 8 8 0 0 1-3.6-.9L4 20l1.9-4.1A7.5 7.5 0 1 1 20 11.5Z" />
+            <path d="M8.5 11.5h.01M12.5 11.5h.01M16.5 11.5h.01" />
+          </svg>
+        </span>
+        <div className="min-w-0">
+          <h3 className="truncate text-sm font-semibold tracking-tight text-gray-900">{projectName} group chat</h3>
+          <p className="mt-1 text-xs text-gray-500">A shared space for everyone on this project.</p>
+        </div>
       </div>
 
-      <div className="flex h-[min(55vh,480px)] min-h-[260px] flex-none flex-col overflow-y-auto px-4 py-5 sm:px-5" role="log" aria-live="polite" aria-label="Project group chat messages">
+      <div className="chat-scroll flex h-[min(55vh,480px)] min-h-[260px] flex-none flex-col overflow-y-auto px-4 py-5 sm:px-6" role="log" aria-live="polite" aria-label="Project group chat messages">
         <div className="mt-auto w-full space-y-3">
           {loading ? (
             <p className="py-16 text-center text-sm text-gray-400">Loading conversation…</p>
@@ -109,6 +117,12 @@ export default function ProjectChat({ projectId, projectName }: ProjectChatProps
             <p className="py-16 text-center text-sm text-red-500">{error}</p>
           ) : messages.length === 0 ? (
             <div className="py-16 text-center">
+              <span className="chat-empty-icon mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-2xl" aria-hidden="true">
+                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5 8 8 0 0 1-3.6-.9L4 20l1.9-4.1A7.5 7.5 0 1 1 20 11.5Z" />
+                  <path d="M8.5 11.5h.01M12.5 11.5h.01M16.5 11.5h.01" />
+                </svg>
+              </span>
               <p className="text-sm font-medium text-gray-700">Start the project discussion</p>
               <p className="mt-1 text-xs text-gray-400">Messages here are shared with the project team.</p>
             </div>
@@ -117,7 +131,7 @@ export default function ProjectChat({ projectId, projectName }: ProjectChatProps
               const isMine = message.user_id === user?.id;
               return (
                 <div key={message.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[88%] rounded-2xl px-4 py-3 sm:max-w-[75%] ${isMine ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'}`}>
+                  <div className={`max-w-[88%] rounded-2xl px-4 py-3 sm:max-w-[75%] ${isMine ? 'chat-bubble-mine text-white' : 'chat-bubble-other text-gray-900'}`}>
                     <div className="mb-1 flex items-baseline gap-2">
                       <span className={`text-xs font-semibold ${isMine ? 'text-white' : 'text-gray-800'}`}>
                         {isMine ? 'You' : message.author_name}
@@ -137,8 +151,8 @@ export default function ProjectChat({ projectId, projectName }: ProjectChatProps
         <div ref={messageListEnd} />
       </div>
 
-      <form onSubmit={handleSubmit} className="shrink-0 border-t border-gray-100 px-4 py-4 sm:px-5">
-        <label htmlFor="project-chat-message" className="mb-1 block text-sm font-medium text-gray-700">Message</label>
+      <form onSubmit={handleSubmit} className="chat-composer shrink-0 border-t px-4 py-4 sm:px-6">
+        <label htmlFor="project-chat-message" className="mb-2 block text-xs font-semibold uppercase tracking-[.12em] text-gray-500">Message</label>
         <div className="flex items-stretch gap-3">
           <textarea
             id="project-chat-message"
@@ -159,9 +173,9 @@ export default function ProjectChat({ projectId, projectName }: ProjectChatProps
                 event.currentTarget.form?.requestSubmit();
               }
             }}
-            className="min-h-12 min-w-0 flex-1 resize-none overflow-y-auto rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-150"
+            className="field-control min-h-12 min-w-0 flex-1 resize-none overflow-y-auto rounded-xl border px-3.5 py-3 text-sm placeholder:text-gray-400 focus:outline-none transition-colors duration-150"
           />
-          <Button type="submit" className="shrink-0 self-stretch whitespace-nowrap" loading={sending} disabled={!draft.trim() || sending}>
+          <Button type="submit" className="min-h-12 shrink-0 self-stretch whitespace-nowrap px-5" loading={sending} disabled={!draft.trim() || sending}>
             Send message
           </Button>
         </div>

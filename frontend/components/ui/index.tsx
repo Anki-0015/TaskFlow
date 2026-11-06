@@ -33,15 +33,15 @@ export function EmptyState({ icon = 'inbox', title, description, action }: Empty
   const iconName = icon;
 
   return (
-    <div className="flex flex-col items-center justify-center py-16 text-center">
-      <span className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500" aria-hidden="true">
+    <div className="empty-state flex flex-col items-center justify-center py-16 text-center">
+      <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-gray-200 bg-white text-blue-600 shadow-sm" aria-hidden="true">
         {iconPaths[iconName] ? (
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
             {iconPaths[iconName]}
           </svg>
         ) : null}
       </span>
-      <h3 className="text-base font-semibold text-gray-800 mb-1">{title}</h3>
+      <h3 className="mb-1 text-base font-semibold text-gray-900">{title}</h3>
       {description && <p className="text-sm text-gray-500 mb-4">{description}</p>}
       {action}
     </div>
@@ -63,7 +63,7 @@ export function Select({ label, error, options, id, className = '', ...props }: 
       <select
         id={id}
         className={`
-          h-11 w-full rounded-lg border bg-white px-3 text-sm text-gray-900
+          field-control h-12 w-full rounded-xl border bg-white px-3.5 text-sm text-gray-900
           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
           disabled:bg-gray-50 disabled:cursor-not-allowed
           transition-colors duration-150
@@ -91,7 +91,7 @@ export function Textarea({ label, error, id, className = '', ...props }: {
         id={id}
         rows={3}
         className={`
-          w-full rounded-lg border bg-white px-3 py-2 text-sm text-gray-900
+          field-control w-full rounded-xl border bg-white px-3.5 py-3 text-sm text-gray-900
           placeholder:text-gray-400 resize-none
           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
           transition-colors duration-150

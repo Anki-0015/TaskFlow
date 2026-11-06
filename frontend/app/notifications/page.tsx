@@ -53,24 +53,25 @@ export default function NotificationsPage() {
 
   return (
     <DashboardLayout title="Notifications">
-      <div className="animate-fade-in space-y-6">
-        <div>
-          <h2 className="mt-1 text-2xl font-semibold tracking-tight text-gray-900">Notifications</h2>
-          <p className="mt-1 text-sm text-gray-500">Project invitations and requests that need your response.</p>
+      <div className="animate-fade-in space-y-7">
+        <div className="page-intro">
+          <p className="page-eyebrow">Your inbox</p>
+          <h2 className="page-title">Notifications</h2>
+          <p className="page-description">Project invitations and requests that need your response.</p>
         </div>
         {loading ? <PageLoader /> : invitations.length === 0 ? (
           <EmptyState icon="bell" title="You’re all caught up" description="New project invitations will show up here." />
         ) : (
           <div className="space-y-3">
             {invitations.map((invitation) => (
-              <Card key={invitation.id} className="p-5">
+              <Card key={invitation.id} className="notification-card p-5 sm:p-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="font-semibold text-gray-900">{invitation.project_name}</h3>
                       <Badge label={invitation.status} />
                     </div>
-                    <p className="mt-1 text-sm text-gray-600">
+                    <p className="mt-2 text-sm text-gray-600">
                       <span className="font-medium">{invitation.invited_by_name}</span> invited you as a {invitation.role.toLowerCase()}.
                     </p>
                     <p className="mt-1 text-xs text-gray-400">Received {formatDateTime(invitation.created_at)}</p>
