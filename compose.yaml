@@ -33,6 +33,9 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-taskflow_dev_password}
       JWT_SECRET: ${JWT_SECRET:-change-this-taskflow-jwt-secret}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      PASSWORD_RESET_SECRET: ${PASSWORD_RESET_SECRET:-${JWT_SECRET:-change-this-taskflow-jwt-secret}}
+      GMAIL_USER: ${GMAIL_USER:-}
+      GMAIL_APP_PASSWORD: ${GMAIL_APP_PASSWORD:-}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
     ports:
       - "${API_PORT:-5001}:5001"

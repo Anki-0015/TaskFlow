@@ -59,6 +59,10 @@ export default function LoginPage() {
           autoComplete="current-password"
         />
 
+        <div className="-mt-2 flex justify-end">
+          <Link href="/forgot-password" className="text-xs font-semibold text-blue-600 transition hover:text-blue-700">Forgot password?</Link>
+        </div>
+
         {error && <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
 
         <Button type="submit" className="w-full" size="lg" loading={loading}>

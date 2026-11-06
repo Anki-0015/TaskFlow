@@ -59,6 +59,66 @@ export async function login(req: Request, res: Response): Promise<void> {
   }
 }
 
+// POST /api/auth/forgot-password
+export async function forgotPassword(req: Request, res: Response): Promise<void> {
+  const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  if (!email || email.length > 150 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    res.status(400).json({ success: false, message: 'Enter a valid email address.' });
+    return;
+  }
+
+  try {
+    const delivery = await AuthService.requestPasswordReset(email);
+    res.status(200).json({
+      success: true,
+      message: delivery === 'console'
+        ? 'If an account matches, its reset code is available in the backend terminal (development mode).'
+        : 'If an account matches, a reset code will be sent to its email address.',
+      data: { delivery },
+    });
+  } catch (err: unknown) {
+    const error = err as { code?: string; message?: string };
+    console.error('Password reset request failed:', error.code || error.message || 'Unknown error');
+    res.status(503).json({
+      success: false,
+      message: 'Password reset is temporarily unavailable. Please try again later.',
+    });
+  }
+}
+
+// POST /api/auth/reset-password
+export async function resetPassword(req: Request, res: Response): Promise<void> {
+  const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  const code = typeof req.body?.code === 'string' ? req.body.code.trim() : '';
+  const password = typeof req.body?.password === 'string' ? req.body.password : '';
+
+  if (!email || !code || !password) {
+    res.status(400).json({ success: false, message: 'Email, verification code and new password are required.' });
+    return;
+  }
+  if (!/^\d{6}$/.test(code)) {
+    res.status(400).json({ success: false, message: 'Enter the six-digit verification code.' });
+    return;
+  }
+  if (password.length < 8) {
+    res.status(400).json({ success: false, message: 'Password must be at least 8 characters.' });
+    return;
+  }
+
+  try {
+    const updated = await AuthService.resetPasswordWithCode(email, code, password);
+    if (!updated) {
+      res.status(400).json({ success: false, message: 'The code is invalid or expired. Request a new code and try again.' });
+      return;
+    }
+    res.status(200).json({ success: true, message: 'Password changed successfully.' });
+  } catch (err: unknown) {
+    const error = err as { code?: string; message?: string };
+    console.error('Password reset failed:', error.code || error.message || 'Unknown error');
+    res.status(500).json({ success: false, message: 'Could not change the password. Please try again.' });
+  }
+}
+
 // GET /api/auth/me
 export async function getMe(req: Request, res: Response): Promise<void> {
   try {

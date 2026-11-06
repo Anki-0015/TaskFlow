@@ -1,36 +1,25 @@
 # TaskFlow
 
-TaskFlow is a project and task management app built with Next.js, Express, and MySQL.
+TaskFlow is a project and task management workspace built with Next.js, Express, and MySQL. It includes project teams and roles, tasks, project group chat, and password reset by one-time code.
 
-## Run with Docker
+## Quick start with Docker
 
-Requirements: Docker Engine or Docker Desktop with the Compose plugin.
+Requirements: Docker Desktop or Docker Engine with Compose.
 
-```bash
-cp docker.env.example .env
-docker compose up --build -d
+1. Copy `docker.env.example` to `.env` in this directory.
+2. Set the database/JWT secrets and Gmail settings below.
+3. Run `docker compose up --build -d` and open [http://localhost:3000](http://localhost:3000).
+
+```env
+GMAIL_USER=your-gmail-address@gmail.com
+GMAIL_APP_PASSWORD=your-google-app-password
+PASSWORD_RESET_SECRET=your-long-random-secret
 ```
 
-Open the app at [http://localhost:3000](http://localhost:3000). The API health endpoint is [http://localhost:5001/health](http://localhost:5001/health).
+Create a Google App Password from your Google Account after enabling 2-Step Verification. Use it instead of your normal Google password. Generate `PASSWORD_RESET_SECRET` with `openssl rand -hex 32`. Keep `.env` private.
 
-Compose starts MySQL, creates the schema, loads the sample data, and waits for the database and API health checks before starting dependent services. MySQL data persists in a named volume. The initialization SQL runs only when that volume is first created.
+## Local development
 
-To stop the services while keeping the database:
+Start MySQL, copy `backend/.env.example` to `backend/.env`, and set its database and Gmail values. From `backend/`, run `npm ci`, `npm run db:setup`, then `npm run dev`. In another terminal, from `frontend/`, run `npm ci` then `npm run dev`. Open [http://localhost:3000](http://localhost:3000).
 
-```bash
-docker compose down
-```
-
-To remove the database and start again with a fresh schema and seed data:
-
-```bash
-docker compose down -v
-docker compose up --build -d
-```
-
-The `.env` file controls the database credentials, JWT secret, frontend API URL, and host ports. Change the sample JWT secret before deploying. `NEXT_PUBLIC_API_URL` is embedded in the frontend at build time, so rebuild the frontend after changing it:
-
-```bash
-docker compose build frontend
-docker compose up -d
-```
+Without Gmail settings, local development prints reset codes in the backend terminal. Fresh Docker databases initialize automatically; for an existing Docker database, apply `database/schema.sql` once with `docker compose exec -T database sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' < database/schema.sql`.

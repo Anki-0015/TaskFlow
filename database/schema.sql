@@ -19,6 +19,21 @@ CREATE TABLE IF NOT EXISTS users (
 ) ENGINE=InnoDB;
 
 
+CREATE TABLE IF NOT EXISTS password_reset_codes (
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id       INT UNSIGNED NOT NULL,
+  code_hash     CHAR(64) NOT NULL,
+  expires_at    DATETIME NOT NULL,
+  attempt_count TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  consumed_at   DATETIME DEFAULT NULL,
+  created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  CONSTRAINT fk_password_reset_codes_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_password_reset_codes_user_created (user_id, created_at),
+  INDEX idx_password_reset_codes_expiry (expires_at)
+) ENGINE=InnoDB;
+
+
 CREATE TABLE IF NOT EXISTS projects (
   id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   name         VARCHAR(150)  NOT NULL,

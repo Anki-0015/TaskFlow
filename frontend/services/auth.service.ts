@@ -16,6 +16,16 @@ export const AuthService = {
     return data;
   },
 
+  async requestPasswordReset(email: string): Promise<ApiResponse<{ delivery: 'gmail' | 'console' }>> {
+    const { data } = await api.post<ApiResponse<{ delivery: 'gmail' | 'console' }>>('/auth/forgot-password', { email });
+    return data;
+  },
+
+  async resetPassword(email: string, code: string, password: string): Promise<ApiResponse> {
+    const { data } = await api.post<ApiResponse>('/auth/reset-password', { email, code, password });
+    return data;
+  },
+
   async getMe(): Promise<ApiResponse<User>> {
     const { data } = await api.get<ApiResponse<User>>('/auth/me');
     return data;
