@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
   username     VARCHAR(40)   NOT NULL,
   email        VARCHAR(150)  NOT NULL,
   password     VARCHAR(255)  NOT NULL,
+  session_version INT UNSIGNED NOT NULL DEFAULT 0,
   role         ENUM('admin', 'member') NOT NULL DEFAULT 'member',
   avatar       VARCHAR(255)  DEFAULT NULL,
   created_at   DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,

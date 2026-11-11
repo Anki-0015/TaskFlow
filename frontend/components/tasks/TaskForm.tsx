@@ -109,7 +109,7 @@ export default function TaskForm({
       const payload = {
         project_id:  Number(form.project_id),
         title:       form.title.trim(),
-        description: form.description || undefined,
+        description: form.description || null,
         priority:    form.priority as Task['priority'],
         status:      isEdit ? form.status as Task['status'] : 'TODO',
         due_date:    form.due_date || null,

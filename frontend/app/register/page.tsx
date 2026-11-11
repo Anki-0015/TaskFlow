@@ -29,8 +29,8 @@ export default function RegisterPage() {
       setError('Passwords do not match.');
       return;
     }
-    if (form.password.length < 6) {
-      setError('Password must be at least 6 characters.');
+    if (form.password.length < 8) {
+      setError('Password must be at least 8 characters.');
       return;
     }
 
@@ -92,7 +92,7 @@ export default function RegisterPage() {
           type="password"
           showPasswordToggle
           label="Password"
-          placeholder="min. 6 characters"
+          placeholder="At least 8 characters"
           autoComplete="new-password"
           value={form.password}
           onChange={(e) => handleChange('password', e.target.value)}

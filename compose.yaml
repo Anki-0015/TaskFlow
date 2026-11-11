@@ -5,8 +5,8 @@ services:
     environment:
       MYSQL_DATABASE: ${DB_NAME:-taskflow}
       MYSQL_USER: ${DB_USER:-taskflow}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-taskflow_dev_password}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-taskflow_root_dev_password}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in the root .env file}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in the root .env file}
     volumes:
       - mysql_data:/var/lib/mysql
       - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
@@ -30,13 +30,15 @@ services:
       DB_PORT: 3306
       DB_NAME: ${DB_NAME:-taskflow}
       DB_USER: ${DB_USER:-taskflow}
-      DB_PASSWORD: ${DB_PASSWORD:-taskflow_dev_password}
-      JWT_SECRET: ${JWT_SECRET:-change-this-taskflow-jwt-secret}
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in the root .env file}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in the root .env file}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
-      PASSWORD_RESET_SECRET: ${PASSWORD_RESET_SECRET:-${JWT_SECRET:-change-this-taskflow-jwt-secret}}
-      GMAIL_USER: ${GMAIL_USER:-}
-      GMAIL_APP_PASSWORD: ${GMAIL_APP_PASSWORD:-}
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      PASSWORD_RESET_SECRET: ${PASSWORD_RESET_SECRET:?Set PASSWORD_RESET_SECRET in the root .env file}
+      GMAIL_USER: ${GMAIL_USER:?Set GMAIL_USER in the root .env file}
+      GMAIL_APP_PASSWORD: ${GMAIL_APP_PASSWORD:?Set GMAIL_APP_PASSWORD in the root .env file}
+      FRONTEND_URL: ${FRONTEND_URL:?Set FRONTEND_URL in the root .env file}
+    volumes:
+      - ./database/schema.sql:/app/database/schema.sql:ro
     ports:
       - "${API_PORT:-5001}:5001"
     depends_on:
@@ -58,7 +60,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:5001/api}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:?Set NEXT_PUBLIC_API_URL to the browser-reachable API URL}
     restart: unless-stopped
     environment:
       NODE_ENV: production

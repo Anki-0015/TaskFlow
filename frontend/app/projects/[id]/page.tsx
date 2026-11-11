@@ -121,7 +121,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<Params> 
   };
   const completeCount = tasks.filter((task) => task.status === 'COMPLETED').length;
   const progress = tasks.length ? Math.round(completeCount / tasks.length * 100) : 0;
-  const canManageProject = Boolean(project && user && project.created_by === user.id);
+  const canManageProject = project?.current_user_project_role === 'MANAGER';
+  const canDeleteProject = Boolean(project && user && project.created_by === user.id);
   const canEditTasks = canManageProject || Boolean(user && members.some((member) => member.id === user.id && member.role !== 'VIEWER'));
 
   return (
@@ -166,7 +167,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<Params> 
               </div>
               {canManageProject && <div className="flex flex-wrap gap-2">
                 <Button variant="secondary" size="sm" onClick={() => setShowEdit(true)}>Edit</Button>
-                <Button variant="danger" size="sm" onClick={() => setDelProject(true)}>Delete</Button>
+                {canDeleteProject && <Button variant="danger" size="sm" onClick={() => setDelProject(true)}>Delete</Button>}
               </div>}
             </div>
             <div className="border-t border-gray-100 bg-gray-50/70 px-5 py-4 sm:px-7">

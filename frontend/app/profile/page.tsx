@@ -11,11 +11,12 @@ import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 
 export default function ProfilePage() {
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, logout } = useAuth();
 
   const [name,        setName]        = useState(user?.name || '');
   const [password,    setPassword]    = useState('');
   const [confirm,     setConfirm]     = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
   const [saving,      setSaving]      = useState(false);
   const [error,       setError]       = useState('');
 
@@ -32,16 +33,19 @@ export default function ProfilePage() {
       setError('Passwords do not match.');
       return;
     }
-    if (password && password.length < 6) {
-      setError('Password must be at least 6 characters.');
+    if (password && password.length < 8) {
+      setError('Password must be at least 8 characters.');
       return;
     }
 
     setSaving(true);
     try {
-      const updates: { name?: string; password?: string } = {};
+      const updates: { name?: string; password?: string; current_password?: string } = {};
       if (name.trim() !== user?.name) updates.name = name.trim();
-      if (password) updates.password = password;
+      if (password) {
+        updates.password = password;
+        updates.current_password = currentPassword;
+      }
 
       if (Object.keys(updates).length === 0) {
         showToast('No changes to save.', 'info');
@@ -51,14 +55,21 @@ export default function ProfilePage() {
       const res = await AuthService.updateProfile(updates);
       if (res.success) {
         showToast('Profile updated.', 'success');
+        if (password) {
+          showToast('Password changed. Sign in again with your new password.', 'info');
+          logout();
+          return;
+        }
         await refreshUser();
         setPassword('');
         setConfirm('');
+        setCurrentPassword('');
       } else {
         setError(res.message || 'Update failed.');
       }
-    } catch {
-      setError('Update failed. Please try again.');
+    } catch (err: unknown) {
+      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setError(message || 'Update failed. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -122,13 +133,23 @@ export default function ProfilePage() {
               <div className="pt-2 border-t border-gray-100">
                 <p className="text-xs text-gray-500 mb-3">Leave password blank to keep current.</p>
                 <div className="space-y-4">
+                  {password && <Input
+                    id="current-password"
+                    type="password"
+                    showPasswordToggle
+                    autoComplete="current-password"
+                    label="Current Password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    required
+                  />}
                   <Input
                     id="new-password"
                     type="password"
                     showPasswordToggle
                     autoComplete="new-password"
                     label="New Password"
-                    placeholder="min. 6 characters"
+                    placeholder="At least 8 characters"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />

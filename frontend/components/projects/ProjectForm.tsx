@@ -69,9 +69,9 @@ export default function ProjectForm({ isOpen, onClose, onSuccess, initial }: Pro
     try {
       const payload = {
         name:        form.name.trim(),
-        description: form.description || undefined,
-        start_date:  form.start_date  || undefined,
-        end_date:    form.end_date    || undefined,
+        description: form.description || null,
+        start_date:  form.start_date  || null,
+        end_date:    form.end_date    || null,
         status:      form.status as Project['status'],
       };
 

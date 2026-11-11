@@ -16,7 +16,9 @@ async function setupDatabase() {
   });
 
   try {
-    const schemaPath = path.resolve(__dirname, '../../database/schema.sql');
+    const localSchemaPath = path.resolve(__dirname, '../../database/schema.sql');
+    const containerSchemaPath = path.resolve(__dirname, '../database/schema.sql');
+    const schemaPath = fs.existsSync(localSchemaPath) ? localSchemaPath : containerSchemaPath;
     const schema = fs.readFileSync(schemaPath, 'utf8')
       .replace(/CREATE DATABASE IF NOT EXISTS taskflow[^;]*;\s*/i, '')
       .replace(/USE taskflow;\s*/i, '');
@@ -30,6 +32,14 @@ async function setupDatabase() {
       await connection.query("UPDATE users SET username = CONCAT(LEFT(REGEXP_REPLACE(SUBSTRING_INDEX(email, '@', 1), '[^a-zA-Z0-9_]', ''), 30), id) WHERE username IS NULL");
       await connection.query('ALTER TABLE users MODIFY username VARCHAR(40) NOT NULL, ADD UNIQUE INDEX uq_users_username (username)');
       console.log('Added unique usernames to existing user accounts.');
+    }
+    const [sessionVersionColumn] = await connection.query(
+      `SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'users' AND COLUMN_NAME = 'session_version'`,
+      [databaseName]
+    );
+    if (sessionVersionColumn.length === 0) {
+      await connection.query('ALTER TABLE users ADD COLUMN session_version INT UNSIGNED NOT NULL DEFAULT 0 AFTER password');
+      console.log('Added session versioning for password-change sign-outs.');
     }
     const [tables] = await connection.query('SHOW TABLES');
     console.log(`TaskFlow schema ready. Tables: ${tables.map((row) => Object.values(row)[0]).join(', ')}`);

@@ -11,6 +11,7 @@ WORKDIR /app
 
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
+RUN mkdir -p public
 
 ARG NEXT_PUBLIC_API_URL=http://localhost:5001/api
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}

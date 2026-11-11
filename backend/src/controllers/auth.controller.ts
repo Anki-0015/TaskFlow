@@ -1,5 +1,16 @@
 import { Request, Response } from 'express';
 import * as AuthService from '../services/auth.service';
+import { AUTH_COOKIE_NAME } from '../middleware/auth';
+
+function sessionCookieOptions(maxAge: number) {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' as const : 'lax' as const,
+    path: '/',
+    maxAge,
+  };
+}
 
 // POST /api/auth/register
 export async function register(req: Request, res: Response): Promise<void> {
@@ -12,12 +23,16 @@ export async function register(req: Request, res: Response): Promise<void> {
     res.status(400).json({ success: false, message: 'Name, username, email and password are required.' });
     return;
   }
+  if (name.length > 100 || email.length > 150 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    res.status(400).json({ success: false, message: 'Enter a valid name and email address.' });
+    return;
+  }
   if (!/^[a-z0-9_]{3,40}$/.test(username)) {
     res.status(400).json({ success: false, message: 'Username must be 3–40 characters using letters, numbers or underscores.' });
     return;
   }
-  if (password.length < 6) {
-    res.status(400).json({ success: false, message: 'Password must be at least 6 characters.' });
+  if (password.length < 8) {
+    res.status(400).json({ success: false, message: 'Password must be at least 8 characters.' });
     return;
   }
 
@@ -47,7 +62,9 @@ export async function login(req: Request, res: Response): Promise<void> {
 
   try {
     const result = await AuthService.loginUser(email, password);
-    res.status(200).json({ success: true, message: 'Login successful.', data: result });
+    const decoded = AuthService.getSessionExpiry(result.token);
+    res.cookie(AUTH_COOKIE_NAME, result.token, sessionCookieOptions(Math.max(0, decoded * 1000 - Date.now())));
+    res.status(200).json({ success: true, message: 'Login successful.', data: { user: result.user } });
   } catch (err: unknown) {
     const error = err as { code?: string; message?: string };
     if (error.message === 'Invalid email or password.') {
@@ -57,6 +74,12 @@ export async function login(req: Request, res: Response): Promise<void> {
     console.error('Login failed:', error.code || error.message || 'Unknown error');
     res.status(500).json({ success: false, message: 'Could not sign in. Check that the API database is available, then try again.' });
   }
+}
+
+// POST /api/auth/logout
+export async function logout(_req: Request, res: Response): Promise<void> {
+  res.clearCookie(AUTH_COOKIE_NAME, sessionCookieOptions(0));
+  res.status(200).json({ success: true, message: 'Signed out.' });
 }
 
 // POST /api/auth/forgot-password
@@ -92,7 +115,7 @@ export async function resetPassword(req: Request, res: Response): Promise<void> 
   const code = typeof req.body?.code === 'string' ? req.body.code.trim() : '';
   const password = typeof req.body?.password === 'string' ? req.body.password : '';
 
-  if (!email || !code || !password) {
+  if (!email || email.length > 150 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !code || !password) {
     res.status(400).json({ success: false, message: 'Email, verification code and new password are required.' });
     return;
   }
@@ -111,6 +134,7 @@ export async function resetPassword(req: Request, res: Response): Promise<void> 
       res.status(400).json({ success: false, message: 'The code is invalid or expired. Request a new code and try again.' });
       return;
     }
+    res.clearCookie(AUTH_COOKIE_NAME, sessionCookieOptions(0));
     res.status(200).json({ success: true, message: 'Password changed successfully.' });
   } catch (err: unknown) {
     const error = err as { code?: string; message?: string };
@@ -125,19 +149,40 @@ export async function getMe(req: Request, res: Response): Promise<void> {
     const user = await AuthService.getMe(req.user!.id);
     res.status(200).json({ success: true, data: user });
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Failed to fetch profile.';
-    res.status(404).json({ success: false, message: msg });
+    const databaseError = Boolean(err && typeof err === 'object' && 'code' in err);
+    res.status(databaseError ? 500 : 404).json({
+      success: false,
+      message: databaseError ? 'Could not load your profile.' : err instanceof Error ? err.message : 'Failed to fetch profile.',
+    });
   }
 }
 
 // PUT /api/auth/profile
 export async function updateProfile(req: Request, res: Response): Promise<void> {
   try {
-    const { name, password } = req.body;
-    const user = await AuthService.updateProfile(req.user!.id, { name, password });
+    const name = req.body?.name;
+    const password = req.body?.password;
+    const currentPassword = req.body?.current_password;
+    if (name !== undefined && (typeof name !== 'string' || !name.trim() || name.trim().length > 100)) {
+      res.status(400).json({ success: false, message: 'Name must be between 1 and 100 characters.' });
+      return;
+    }
+    if (password !== undefined && (typeof password !== 'string' || password.length < 8)) {
+      res.status(400).json({ success: false, message: 'Password must be at least 8 characters.' });
+      return;
+    }
+    if (password && (typeof currentPassword !== 'string' || !currentPassword)) {
+      res.status(400).json({ success: false, message: 'Enter your current password to set a new one.' });
+      return;
+    }
+    const user = await AuthService.updateProfile(req.user!.id, { name: name?.trim(), password, currentPassword });
+    if (password) res.clearCookie(AUTH_COOKIE_NAME, sessionCookieOptions(0));
     res.status(200).json({ success: true, message: 'Profile updated.', data: user });
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Failed to update profile.';
-    res.status(400).json({ success: false, message: msg });
+    const databaseError = Boolean(err && typeof err === 'object' && 'code' in err);
+    res.status(databaseError ? 500 : 400).json({
+      success: false,
+      message: databaseError ? 'Could not update your profile.' : err instanceof Error ? err.message : 'Failed to update profile.',
+    });
   }
 }

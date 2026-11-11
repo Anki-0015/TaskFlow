@@ -13,8 +13,10 @@ import { ConfirmDialog } from '@/components/ui/Modal';
 import { showToast } from '@/components/ui/Toast';
 import Link from 'next/link';
 import { formatDate } from '@/utils/date';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function ProjectsPage() {
+  const { user } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading,  setLoading]  = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -129,21 +131,21 @@ export default function ProjectsPage() {
                     <div className="mt-5 max-w-sm"><div className="mb-2 flex justify-between text-[10px] font-semibold uppercase tracking-[.1em] text-gray-400"><span>Progress</span><span>{p.task_count ? Math.round((p.completed_count || 0) / p.task_count * 100) : 0}%</span></div><div className="h-2 overflow-hidden rounded-full bg-gray-100"><div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all" style={{ width: `${p.task_count ? Math.round((p.completed_count || 0) / p.task_count * 100) : 0}%` }} /></div></div>
                   </div>
                   <div className="pointer-events-auto relative z-10 flex items-center gap-2 flex-shrink-0">
-                    <Button
+                    {p.current_user_project_role === 'MANAGER' && <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => { setEditing(p); setShowForm(true); }}
                     >
                       Edit
-                    </Button>
-                    <Button
+                    </Button>}
+                    {p.created_by === user?.id && <Button
                       variant="ghost"
                       size="sm"
                       className="text-red-500 hover:bg-red-50"
                       onClick={() => setDeleting(p)}
                     >
                       Delete
-                    </Button>
+                    </Button>}
                   </div>
                 </div>
               </Card>

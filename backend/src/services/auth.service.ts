@@ -37,7 +37,8 @@ function getResetCodeDelivery(): ResetCodeDelivery {
 }
 
 function hashResetCode(code: string): Buffer {
-  const secret = process.env.PASSWORD_RESET_SECRET || process.env.JWT_SECRET || 'taskflow-reset-code';
+  const secret = process.env.PASSWORD_RESET_SECRET;
+  if (!secret) throw new Error('PASSWORD_RESET_SECRET is not configured.');
   return createHmac('sha256', secret).update(code).digest();
 }
 
@@ -131,12 +132,25 @@ export async function loginUser(
     throw new Error('Invalid email or password.');
   }
 
-  const payload: JwtPayload = { id: user.id, email: user.email, role: user.role };
+  const payload: JwtPayload = {
+    id: user.id,
+    email: user.email,
+    role: user.role,
+    session_version: Number(user.session_version || 0),
+  };
   const expiresIn = (process.env.JWT_EXPIRES_IN || '7d') as jwt.SignOptions['expiresIn'];
   const token = jwt.sign(payload, process.env.JWT_SECRET as string, { expiresIn });
 
-  const { password: _pw, ...safeUser } = user;
+  const { password: _pw, session_version: _sessionVersion, ...safeUser } = user;
   return { user: safeUser as Omit<User, 'password'>, token };
+}
+
+export function getSessionExpiry(token: string): number {
+  const decoded = jwt.decode(token);
+  if (!decoded || typeof decoded === 'string' || typeof decoded.exp !== 'number') {
+    throw new Error('Could not determine session expiry.');
+  }
+  return decoded.exp;
 }
 
 // ── Password reset ───────────────────────────────────────────────────────
@@ -145,6 +159,7 @@ export async function requestPasswordReset(email: string): Promise<ResetCodeDeli
   const connection = await pool.getConnection();
   let recipient: PasswordResetUserRow | undefined;
   let resetCode = '';
+  let resetCodeId: number | undefined;
 
   try {
     await connection.beginTransaction();
@@ -173,10 +188,11 @@ export async function requestPasswordReset(email: string): Promise<ResetCodeDeli
         'DELETE FROM password_reset_codes WHERE user_id = ? AND created_at < DATE_SUB(UTC_TIMESTAMP(), INTERVAL 30 DAY)',
         [recipient.id],
       );
-      await connection.query<ResultSetHeader>(
+      const [insertedCode] = await connection.query<ResultSetHeader>(
         'INSERT INTO password_reset_codes (user_id, code_hash, expires_at, created_at) VALUES (?, ?, DATE_ADD(UTC_TIMESTAMP(), INTERVAL 10 MINUTE), UTC_TIMESTAMP())',
         [recipient.id, hashResetCode(resetCode).toString('hex')],
       );
+      resetCodeId = insertedCode.insertId;
     }
 
     await connection.commit();
@@ -188,10 +204,16 @@ export async function requestPasswordReset(email: string): Promise<ResetCodeDeli
   }
 
   if (recipient) {
-    void deliverResetCode(recipient.email, recipient.name, resetCode, delivery).catch((error: unknown) => {
+    try {
+      await deliverResetCode(recipient.email, recipient.name, resetCode, delivery);
+    } catch (error: unknown) {
+      if (resetCodeId) {
+        await pool.query('DELETE FROM password_reset_codes WHERE id = ?', [resetCodeId]);
+      }
       const message = error instanceof Error ? error.message : 'Unknown email delivery error.';
       console.error(`Password reset email delivery failed: ${message}`);
-    });
+      throw new Error('Password reset email could not be delivered.');
+    }
   }
 
   return delivery;
@@ -244,7 +266,7 @@ export async function resetPasswordWithCode(email: string, code: string, newPass
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    await connection.query('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, user.id]);
+    await connection.query('UPDATE users SET password = ?, session_version = session_version + 1 WHERE id = ?', [hashedPassword, user.id]);
     await connection.query(
       'UPDATE password_reset_codes SET consumed_at = UTC_TIMESTAMP() WHERE user_id = ? AND consumed_at IS NULL',
       [user.id],
@@ -272,11 +294,15 @@ export async function getMe(id: number): Promise<Omit<User, 'password'>> {
 // ── Update Profile ────────────────────────────────────────────────────────
 export async function updateProfile(
   id: number,
-  updates: { name?: string; password?: string }
+  updates: { name?: string; password?: string; currentPassword?: string }
 ): Promise<Omit<User, 'password'>> {
   if (updates.password) {
+    const [rows] = await pool.query<UserRow[]>('SELECT password FROM users WHERE id = ?', [id]);
+    if (!rows.length || !updates.currentPassword || !await bcrypt.compare(updates.currentPassword, rows[0].password as string)) {
+      throw new Error('Current password is incorrect.');
+    }
     updates.password = await bcrypt.hash(updates.password, 10);
-    await pool.query('UPDATE users SET name = COALESCE(?, name), password = ? WHERE id = ?', [
+    await pool.query('UPDATE users SET name = COALESCE(?, name), password = ?, session_version = session_version + 1 WHERE id = ?', [
       updates.name,
       updates.password,
       id,

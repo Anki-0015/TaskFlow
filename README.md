@@ -1,25 +1,21 @@
 # TaskFlow
 
-TaskFlow is a project and task management workspace built with Next.js, Express, and MySQL. It includes project teams and roles, tasks, project group chat, and password reset by one-time code.
+Project and task management workspace built with Next.js, Express, TypeScript, and MySQL. Includes project roles, task status permissions, invitations, group chat, and email password reset.
 
-## Quick start with Docker
+## Docker setup
 
-Requirements: Docker Desktop or Docker Engine with Compose.
+Install Docker, copy `docker.env.example` to the project root as `.env`, and replace every `replace_with_...` value with a unique secret. Generate the JWT and reset secrets with `openssl rand -hex 32`. Set Gmail to a Google App Password. For deployment, set `FRONTEND_URL` to the exact frontend origin and `NEXT_PUBLIC_API_URL` to an API URL reachable by the visitor’s browser. Then run:
 
-1. Copy `docker.env.example` to `.env` in this directory.
-2. Set the database/JWT secrets and Gmail settings below.
-3. Run `docker compose up --build -d` and open [http://localhost:3000](http://localhost:3000).
-
-```env
-GMAIL_USER=your-gmail-address@gmail.com
-GMAIL_APP_PASSWORD=your-google-app-password
-PASSWORD_RESET_SECRET=your-long-random-secret
+```sh
+docker compose up --build -d
 ```
 
-Create a Google App Password from your Google Account after enabling 2-Step Verification. Use it instead of your normal Google password. Generate `PASSWORD_RESET_SECRET` with `openssl rand -hex 32`. Keep `.env` private.
+Open [http://localhost:3000](http://localhost:3000). Compose reads the root `.env`; `backend/.env` is for local development.
+
+For an existing Docker database volume, apply schema updates with `docker compose exec backend npm run db:setup`.
 
 ## Local development
 
-Start MySQL, copy `backend/.env.example` to `backend/.env`, and set its database and Gmail values. From `backend/`, run `npm ci`, `npm run db:setup`, then `npm run dev`. In another terminal, from `frontend/`, run `npm ci` then `npm run dev`. Open [http://localhost:3000](http://localhost:3000).
+Start MySQL, copy `backend/.env.example` to `backend/.env`, and configure its database and secrets. From `backend/`, run `npm ci` and `npm run dev`; development startup applies the schema setup before starting the API. In another terminal, from `frontend/`, run `npm ci` and `npm run dev`. Open [http://localhost:3000](http://localhost:3000).
 
-Without Gmail settings, local development prints reset codes in the backend terminal. Fresh Docker databases initialize automatically; for an existing Docker database, apply `database/schema.sql` once with `docker compose exec -T database sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' < database/schema.sql`.
+Password reset codes print in the backend terminal when Gmail is not configured in development. Keep both `.env` files private.

@@ -1,6 +1,7 @@
 import pool from '../config/database';
 import { Task } from '../models/types';
 import { RowDataPacket, ResultSetHeader } from 'mysql2';
+import { assertCanChangeTaskStatus } from './taskPermissions';
 
 interface TaskRow extends Task, RowDataPacket {}
 
@@ -61,15 +62,7 @@ async function ensureCanChangeTaskStatus(taskId: number, userId: number, nextSta
   if (!rows.length) throw new Error('Task not found.');
 
   const role = Number(rows[0].created_by) === userId ? 'MANAGER' : rows[0].role;
-  if (role === 'VIEWER' || !role) {
-    throw new Error('Viewers can only view tasks.');
-  }
-  if (role === 'MEMBER' && nextStatus !== 'IN_PROGRESS') {
-    throw new Error('Members can only move tasks to In Progress.');
-  }
-  if (role !== 'MANAGER' && role !== 'MEMBER') {
-    throw new Error('You do not have permission to change this task status.');
-  }
+  assertCanChangeTaskStatus(role, nextStatus);
 }
 
 async function ensureCanCreateTask(projectId: number, userId: number, assignedTo?: number | null): Promise<void> {
@@ -200,7 +193,7 @@ export async function updateTask(
     `UPDATE tasks
      SET project_id  = COALESCE(?, project_id),
          title       = COALESCE(?, title),
-         description = COALESCE(?, description),
+         description = CASE WHEN ? THEN ? ELSE description END,
          priority    = COALESCE(?, priority),
          status      = COALESCE(?, status),
          due_date    = CASE WHEN ? THEN ? ELSE due_date END,
@@ -209,7 +202,8 @@ export async function updateTask(
     [
       project_id ?? null,
       title,
-      description,
+      description !== undefined ? 1 : 0,
+      description ?? null,
       priority,
       status,
       due_date !== undefined ? 1 : 0,

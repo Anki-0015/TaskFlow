@@ -6,6 +6,7 @@ export interface User {
   username: string;
   email: string;
   password?: string;
+  session_version?: number;
   role: 'admin' | 'member';
   avatar?: string | null;
   created_at: Date;
@@ -44,6 +45,7 @@ export interface JwtPayload {
   id: number;
   email: string;
   role: string;
+  session_version: number;
 }
 
 export interface ApiResponse<T = unknown> {

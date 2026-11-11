@@ -99,5 +99,4 @@ export interface ApiResponse<T = unknown> {
 
 export interface LoginResponse {
   user: User;
-  token: string;
 }
