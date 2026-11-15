@@ -11,6 +11,7 @@ import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import TaskForm from '@/components/tasks/TaskForm';
+import TaskBoard from '@/components/tasks/TaskBoard';
 import { ConfirmDialog } from '@/components/ui/Modal';
 import { showToast } from '@/components/ui/Toast';
 import Link from 'next/link';
@@ -25,6 +26,7 @@ export default function TasksPage() {
   const [editing,  setEditing]  = useState<Task | null>(null);
   const [deleting, setDeleting] = useState<Task | null>(null);
   const [delLoad,  setDelLoad]  = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'board'>('list');
 
   // Filters
   const [search,    setSearch]    = useState('');
@@ -79,6 +81,21 @@ export default function TasksPage() {
       if (res.success) setTasks((prev) => prev.map((t) => (t.id === task.id ? res.data! : t)));
     } catch {
       showToast('Failed to update status.', 'error');
+    }
+  }
+
+  async function moveTask(task: Task, nextStatus: Task['status']) {
+    try {
+      const res = await TaskService.updateStatus(task.id, nextStatus);
+      if (!res.success || !res.data) {
+        showToast(res.message || 'Failed to update task status.', 'error');
+        return;
+      }
+      setTasks((prev) => status && res.data!.status !== status
+        ? prev.filter((item) => item.id !== task.id)
+        : prev.map((item) => item.id === task.id ? res.data! : item));
+    } catch {
+      showToast('Failed to update task status.', 'error');
     }
   }
 
@@ -141,6 +158,22 @@ export default function TasksPage() {
 
         {/* Filters */}
         <Card className="filter-panel p-4 sm:p-5">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">View</p>
+            <div className="inline-flex rounded-xl border border-gray-200 bg-gray-50 p-1" role="group" aria-label="Task view">
+              {(['list', 'board'] as const).map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  aria-pressed={viewMode === mode}
+                  onClick={() => setViewMode(mode)}
+                  className={`rounded-lg px-3 py-2 text-xs font-semibold capitalize transition-colors ${viewMode === mode ? 'bg-white text-sky-800 shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}
+                >
+                  {mode}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <Input
               id="task-search"
@@ -172,7 +205,7 @@ export default function TasksPage() {
         {/* Task list */}
         {loading ? (
           <PageLoader />
-        ) : tasks.length === 0 ? (
+        ) : tasks.length === 0 && viewMode === 'list' ? (
           <EmptyState
             icon="check"
             title="No tasks found"
@@ -180,7 +213,15 @@ export default function TasksPage() {
             action={taskableProjects.length > 0 ? <Button onClick={() => setShowForm(true)}>Create Task</Button> : undefined}
           />
         ) : (
-          <div className="space-y-6">
+          viewMode === 'board' ? (
+            <TaskBoard
+              tasks={tasks}
+              onMoveTask={moveTask}
+              onEditTask={(task) => { setEditing(task); setShowForm(true); }}
+              onDeleteTask={setDeleting}
+              showProject
+            />
+          ) : <div className="space-y-6">
             {groupedTasks.filter((group) => group.tasks.length > 0).map((group) => (
               <section key={group.status} aria-labelledby={`task-group-${group.status}`} className="space-y-2">
                 <div className="flex items-center justify-between px-1">

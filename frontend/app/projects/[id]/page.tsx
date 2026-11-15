@@ -13,6 +13,7 @@ import ProjectForm from '@/components/projects/ProjectForm';
 import InviteModal from '@/components/projects/InviteModal';
 import ProjectChat from '@/components/projects/ProjectChat';
 import TaskForm from '@/components/tasks/TaskForm';
+import TaskBoard from '@/components/tasks/TaskBoard';
 import { ConfirmDialog } from '@/components/ui/Modal';
 import { showToast } from '@/components/ui/Toast';
 import { useRouter } from 'next/navigation';
@@ -51,6 +52,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<Params> 
   const [showTask, setShowTask] = useState(false);
   const [showInvite, setShowInvite] = useState(false);
   const [activeProjectTab, setActiveProjectTab] = useState<'tasks' | 'chat'>('tasks');
+  const [taskViewMode, setTaskViewMode] = useState<'list' | 'board'>('list');
   const [editTask, setEditTask] = useState<Task | null>(null);
   const [delProject, setDelProject] = useState(false);
   const [delTask,     setDelTask]    = useState<Task | null>(null);
@@ -113,6 +115,19 @@ export default function ProjectDetailPage({ params }: { params: Promise<Params> 
       if (res.success) setTasks((prev) => prev.map((t) => (t.id === task.id ? res.data! : t)));
     } catch {
       showToast('Failed to update status.', 'error');
+    }
+  }
+
+  async function moveTask(task: Task, nextStatus: Task['status']) {
+    try {
+      const res = await TaskService.updateStatus(task.id, nextStatus);
+      if (!res.success || !res.data) {
+        showToast(res.message || 'Failed to update task status.', 'error');
+        return;
+      }
+      setTasks((prev) => prev.map((item) => item.id === task.id ? res.data! : item));
+    } catch {
+      showToast('Failed to update task status.', 'error');
     }
   }
 
@@ -240,17 +255,39 @@ export default function ProjectDetailPage({ params }: { params: Promise<Params> 
 
           {activeProjectTab === 'tasks' ? (
             <section id="project-tasks-panel" role="tabpanel" aria-labelledby="project-tasks-tab" className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <h3 className="text-sm font-semibold text-gray-900">Project tasks</h3>
-                {canEditTasks && <Button size="sm" onClick={() => { setEditTask(null); setShowTask(true); }}>＋ Add task</Button>}
+                <div className="flex items-center gap-3">
+                  <div className="inline-flex rounded-xl border border-gray-200 bg-gray-50 p-1" role="group" aria-label="Project task view">
+                    {(['list', 'board'] as const).map((mode) => (
+                      <button
+                        key={mode}
+                        type="button"
+                        aria-pressed={taskViewMode === mode}
+                        onClick={() => setTaskViewMode(mode)}
+                        className={`rounded-lg px-3 py-2 text-xs font-semibold capitalize transition-colors ${taskViewMode === mode ? 'bg-white text-sky-800 shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}
+                      >
+                        {mode}
+                      </button>
+                    ))}
+                  </div>
+                  {canEditTasks && <Button size="sm" onClick={() => { setEditTask(null); setShowTask(true); }}>＋ Add task</Button>}
+                </div>
               </div>
 
-              {tasks.length === 0 ? (
+              {tasks.length === 0 && taskViewMode === 'list' ? (
                 <EmptyState
                   icon="check"
                   title="No tasks yet"
                   description="Add tasks to this project."
                   action={canEditTasks ? <Button size="sm" onClick={() => setShowTask(true)}>Add task</Button> : undefined}
+                />
+              ) : taskViewMode === 'board' ? (
+                <TaskBoard
+                  tasks={tasks}
+                  onMoveTask={moveTask}
+                  onEditTask={(task) => { setEditTask(task); setShowTask(true); }}
+                  onDeleteTask={setDelTask}
                 />
               ) : (
                 <div className="space-y-2">
