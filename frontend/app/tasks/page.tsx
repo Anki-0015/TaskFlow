@@ -15,10 +15,12 @@ import TaskBoard from '@/components/tasks/TaskBoard';
 import { ConfirmDialog } from '@/components/ui/Modal';
 import { showToast } from '@/components/ui/Toast';
 import Link from 'next/link';
+import { useAuth } from '@/hooks/useAuth';
 import { formatDate } from '@/utils/date';
 import { canCreateProjectTasks, canManageTask, getNextTaskStatus, getTaskStatusActionLabel } from '@/utils/taskPermissions';
 
 export default function TasksPage() {
+  const { user } = useAuth();
   const [tasks,    setTasks]    = useState<Task[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading,  setLoading]  = useState(true);
@@ -160,14 +162,14 @@ export default function TasksPage() {
         <Card className="filter-panel p-4 sm:p-5">
           <div className="mb-4 flex items-center justify-between gap-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">View</p>
-            <div className="inline-flex rounded-xl border border-gray-200 bg-gray-50 p-1" role="group" aria-label="Task view">
+            <div className="view-toggle inline-flex rounded-xl border p-1" role="group" aria-label="Task view">
               {(['list', 'board'] as const).map((mode) => (
                 <button
                   key={mode}
                   type="button"
                   aria-pressed={viewMode === mode}
                   onClick={() => setViewMode(mode)}
-                  className={`rounded-lg px-3 py-2 text-xs font-semibold capitalize transition-colors ${viewMode === mode ? 'bg-white text-sky-800 shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}
+                  className="view-toggle-button rounded-lg px-3 py-2 text-xs font-semibold capitalize transition-colors"
                 >
                   {mode}
                 </button>
@@ -220,6 +222,8 @@ export default function TasksPage() {
               onEditTask={(task) => { setEditing(task); setShowForm(true); }}
               onDeleteTask={setDeleting}
               showProject
+              showFilters={false}
+              currentUserId={user?.id}
             />
           ) : <div className="space-y-6">
             {groupedTasks.filter((group) => group.tasks.length > 0).map((group) => (

@@ -61,11 +61,13 @@ export default function TaskForm({
   const [error,   setError]   = useState('');
   const projectRangesKey = projects.map((project) => `${project.id}:${project.start_date || ''}:${project.end_date || ''}`).join('|');
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps -- Reset when the form opens or its task/project date ranges change; the range key avoids resets caused only by a new array identity.
+  // Reset when the form opens or its task/project date ranges change; the range key avoids resets caused only by a new array identity.
   useEffect(() => {
     if (!isOpen) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Resetting form fields when the modal opens.
     setForm(getFormValues(initial, defaultProjectId, projects));
     setError('');
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- See the comment above the effect.
   }, [isOpen, initial?.id, defaultProjectId, projectRangesKey]);
 
   const selectedProject = projects.find((project) => String(project.id) === form.project_id);

@@ -14,6 +14,7 @@ import InviteModal from '@/components/projects/InviteModal';
 import ProjectChat from '@/components/projects/ProjectChat';
 import TaskForm from '@/components/tasks/TaskForm';
 import TaskBoard from '@/components/tasks/TaskBoard';
+import Avatar from '@/components/ui/Avatar';
 import { ConfirmDialog } from '@/components/ui/Modal';
 import { showToast } from '@/components/ui/Toast';
 import { useRouter } from 'next/navigation';
@@ -24,19 +25,15 @@ import { getNextTaskStatus, getTaskStatusActionLabel } from '@/utils/taskPermiss
 
 interface Params { id: string }
 
-function MemberAvatar({ name }: { name: string }) {
-  const initials = name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  const hue = ((hash % 360) + 360) % 360;
-  return (
-    <span
-      className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold"
-      style={{ background: `hsl(${hue} 65% 88%)`, color: `hsl(${hue} 55% 35%)` }}
-    >
-      {initials}
-    </span>
-  );
+type TaskViewMode = 'list' | 'board';
+const VIEW_STORAGE_KEY = 'taskflow-project-task-view';
+
+function readStoredView(): TaskViewMode {
+  try {
+    return window.localStorage.getItem(VIEW_STORAGE_KEY) === 'list' ? 'list' : 'board';
+  } catch {
+    return 'board';
+  }
 }
 
 export default function ProjectDetailPage({ params }: { params: Promise<Params> }) {
@@ -52,7 +49,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<Params> 
   const [showTask, setShowTask] = useState(false);
   const [showInvite, setShowInvite] = useState(false);
   const [activeProjectTab, setActiveProjectTab] = useState<'tasks' | 'chat'>('tasks');
-  const [taskViewMode, setTaskViewMode] = useState<'list' | 'board'>('list');
+  const [taskViewMode, setTaskViewMode] = useState<TaskViewMode>(readStoredView);
   const [editTask, setEditTask] = useState<Task | null>(null);
   const [delProject, setDelProject] = useState(false);
   const [delTask,     setDelTask]    = useState<Task | null>(null);
@@ -129,6 +126,20 @@ export default function ProjectDetailPage({ params }: { params: Promise<Params> 
     } catch {
       showToast('Failed to update task status.', 'error');
     }
+  }
+
+  function changeViewMode(mode: TaskViewMode) {
+    setTaskViewMode(mode);
+    try {
+      window.localStorage.setItem(VIEW_STORAGE_KEY, mode);
+    } catch {
+      // Ignore unavailable storage.
+    }
+  }
+
+  function openNewTask() {
+    setEditTask(null);
+    setShowTask(true);
   }
 
   const priorityDot: Record<string, string> = {
@@ -214,7 +225,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<Params> 
               <div className="flex flex-wrap gap-2">
                 {members.map((member) => (
                   <div key={member.id} className="team-member-chip flex items-center gap-2 rounded-2xl border border-gray-100 bg-gray-50 px-3 py-2">
-                    <MemberAvatar name={member.name} />
+                    <Avatar name={member.name} />
                     <span>
                       <span className="block text-xs font-medium text-gray-900">{member.name}</span>
                       <span className="block text-[11px] text-gray-500">@{member.username} · {member.role.toLowerCase()}</span>
@@ -258,20 +269,20 @@ export default function ProjectDetailPage({ params }: { params: Promise<Params> 
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h3 className="text-sm font-semibold text-gray-900">Project tasks</h3>
                 <div className="flex items-center gap-3">
-                  <div className="inline-flex rounded-xl border border-gray-200 bg-gray-50 p-1" role="group" aria-label="Project task view">
+                  <div className="view-toggle inline-flex rounded-xl border p-1" role="group" aria-label="Project task view">
                     {(['list', 'board'] as const).map((mode) => (
                       <button
                         key={mode}
                         type="button"
                         aria-pressed={taskViewMode === mode}
-                        onClick={() => setTaskViewMode(mode)}
-                        className={`rounded-lg px-3 py-2 text-xs font-semibold capitalize transition-colors ${taskViewMode === mode ? 'bg-white text-sky-800 shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}
+                        onClick={() => changeViewMode(mode)}
+                        className="view-toggle-button rounded-lg px-3 py-2 text-xs font-semibold capitalize transition-colors"
                       >
                         {mode}
                       </button>
                     ))}
                   </div>
-                  {canEditTasks && <Button size="sm" onClick={() => { setEditTask(null); setShowTask(true); }}>＋ Add task</Button>}
+                  {canEditTasks && <Button size="sm" onClick={openNewTask}>＋ Add task</Button>}
                 </div>
               </div>
 
@@ -280,7 +291,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<Params> 
                   icon="check"
                   title="No tasks yet"
                   description="Add tasks to this project."
-                  action={canEditTasks ? <Button size="sm" onClick={() => setShowTask(true)}>Add task</Button> : undefined}
+                  action={canEditTasks ? <Button size="sm" onClick={openNewTask}>Add task</Button> : undefined}
                 />
               ) : taskViewMode === 'board' ? (
                 <TaskBoard
@@ -288,6 +299,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<Params> 
                   onMoveTask={moveTask}
                   onEditTask={(task) => { setEditTask(task); setShowTask(true); }}
                   onDeleteTask={setDelTask}
+                  onAddTask={canEditTasks ? openNewTask : undefined}
+                  currentUserId={user?.id}
                 />
               ) : (
                 <div className="space-y-2">
