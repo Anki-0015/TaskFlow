@@ -34,6 +34,7 @@ export interface Task {
   priority: 'LOW' | 'MEDIUM' | 'HIGH';
   status: 'TODO' | 'IN_PROGRESS' | 'COMPLETED';
   due_date?: string | null;
+  completed_at?: string | null;
   created_by: number;
   assigned_to?: number | null;
   current_user_project_role?: 'MANAGER' | 'MEMBER' | 'VIEWER';

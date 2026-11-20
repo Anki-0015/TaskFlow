@@ -33,7 +33,12 @@ export default function TasksPage() {
   // Filters
   const [search,    setSearch]    = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [status,    setStatus]    = useState('');
+  // Allow deep links such as /tasks?status=COMPLETED from the dashboard.
+  const [status,    setStatus]    = useState(() => {
+    if (typeof window === 'undefined') return '';
+    const fromUrl = new URLSearchParams(window.location.search).get('status') || '';
+    return ['TODO', 'IN_PROGRESS', 'COMPLETED'].includes(fromUrl) ? fromUrl : '';
+  });
   const [priority,  setPriority]  = useState('');
   const [projectId, setProjectId] = useState('');
 

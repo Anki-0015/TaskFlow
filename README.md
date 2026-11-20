@@ -1,6 +1,22 @@
 # TaskFlow
 
-Project and task management workspace built with Next.js, Express, TypeScript, and MySQL. Includes project roles, task status permissions, invitations, group chat, and email password reset.
+Project and task management workspace built with Next.js, Express, TypeScript, and MySQL.
+
+## Features
+
+- **Dashboard** — personal focus list with one-click start/complete, upcoming deadlines, overdue alerts, a 14-day completion chart, task status breakdown, project progress and recent activity.
+- **Projects** — roles (manager, member, viewer), invitations, group chat, and a Kanban board with filters, sorting, due-date highlighting and drag-and-drop.
+- **Tasks** — list and board views across all projects with search and filters.
+- **Accounts** — cookie-based sessions, profile editing, and email password reset.
+- **Light and dark themes**, responsive down to phone screens.
+
+## Production notes
+
+- The API sets security headers, disables caching of API responses, and rate-limits requests (300/min per IP, 20 sign-in/reset attempts per 15 min). Limits are in memory, so use a shared store if you run more than one API instance.
+- Behind a reverse proxy or load balancer, set `TRUST_PROXY` to the number of proxies so client IPs are correct.
+- `GET /health` is a liveness check; `GET /ready` also checks the database and is used by the Compose health check.
+- Database sessions run in UTC. The backend container applies idempotent schema migrations (`scripts/setup-db.js`) on every start.
+- The API shuts down gracefully on `SIGTERM`.
 
 ## Docker setup
 

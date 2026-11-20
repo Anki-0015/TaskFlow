@@ -37,6 +37,7 @@ services:
       GMAIL_USER: ${GMAIL_USER:?Set GMAIL_USER in the root .env file}
       GMAIL_APP_PASSWORD: ${GMAIL_APP_PASSWORD:?Set GMAIL_APP_PASSWORD in the root .env file}
       FRONTEND_URL: ${FRONTEND_URL:?Set FRONTEND_URL in the root .env file}
+      TRUST_PROXY: ${TRUST_PROXY:-0}
     volumes:
       - ./database/schema.sql:/app/database/schema.sql:ro
     ports:
@@ -49,7 +50,7 @@ services:
         - CMD
         - node
         - -e
-        - "fetch('http://127.0.0.1:5001/health').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"
+        - "fetch('http://127.0.0.1:5001/ready').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"
       interval: 10s
       timeout: 5s
       retries: 5

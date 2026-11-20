@@ -37,6 +37,7 @@ export default function DashboardLayout({ children, title }: DashboardLayoutProp
 
   return (
     <div className="app-canvas fixed inset-0 flex overflow-hidden">
+      {title && <title>{`${title} · TaskFlow`}</title>}
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <div className="flex h-dvh min-w-0 flex-1 flex-col overflow-hidden">

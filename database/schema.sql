@@ -99,6 +99,7 @@ CREATE TABLE IF NOT EXISTS tasks (
   priority     ENUM('LOW', 'MEDIUM', 'HIGH') NOT NULL DEFAULT 'MEDIUM',
   status       ENUM('TODO', 'IN_PROGRESS', 'COMPLETED') NOT NULL DEFAULT 'TODO',
   due_date     DATE          DEFAULT NULL,
+  completed_at DATETIME      DEFAULT NULL,
   created_by   INT UNSIGNED  NOT NULL,
   assigned_to  INT UNSIGNED  DEFAULT NULL,
   created_at   DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -111,5 +112,7 @@ CREATE TABLE IF NOT EXISTS tasks (
   INDEX idx_tasks_project_id  (project_id),
   INDEX idx_tasks_assigned_to (assigned_to),
   INDEX idx_tasks_status      (status),
-  INDEX idx_tasks_priority    (priority)
+  INDEX idx_tasks_priority    (priority),
+  INDEX idx_tasks_completed_at (completed_at),
+  INDEX idx_tasks_project_updated (project_id, updated_at)
 ) ENGINE=InnoDB;

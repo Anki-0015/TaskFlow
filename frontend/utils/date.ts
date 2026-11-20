@@ -36,3 +36,19 @@ export function formatDateTime(value?: string | Date | null): string {
     day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit',
   }).format(date);
 }
+
+/** Short relative time such as "just now", "5m ago", "3h ago", "2d ago", or a date for older values. */
+export function formatRelativeTime(value?: string | Date | null, now: Date = new Date()): string {
+  if (!value) return '—';
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+  const seconds = Math.round((now.getTime() - date.getTime()) / 1000);
+  if (seconds < 45) return 'just now';
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.round(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return formatDate(date);
+}

@@ -81,7 +81,7 @@ async function ensureCanCreateTask(projectId: number, userId: number, assignedTo
 }
 
 // ── Build query helper ────────────────────────────────────────────────────
-function baseTaskQuery() {
+export function baseTaskQuery() {
   return `
     SELECT
       t.*,
@@ -196,6 +196,7 @@ export async function updateTask(
          description = CASE WHEN ? THEN ? ELSE description END,
          priority    = COALESCE(?, priority),
          status      = COALESCE(?, status),
+         completed_at = CASE WHEN status = 'COMPLETED' THEN COALESCE(completed_at, UTC_TIMESTAMP()) ELSE NULL END,
          due_date    = CASE WHEN ? THEN ? ELSE due_date END,
          assigned_to = ?
      WHERE id = ?`,
@@ -224,7 +225,13 @@ export async function patchTaskStatus(
 ): Promise<TaskRow> {
   await getTaskById(id, userId);
   await ensureCanChangeTaskStatus(id, userId, status);
-  await pool.query('UPDATE tasks SET status = ? WHERE id = ?', [status, id]);
+  await pool.query(
+    `UPDATE tasks
+     SET status = ?,
+         completed_at = CASE WHEN status = 'COMPLETED' THEN COALESCE(completed_at, UTC_TIMESTAMP()) ELSE NULL END
+     WHERE id = ?`,
+    [status, id],
+  );
   return getTaskById(id, userId);
 }
 

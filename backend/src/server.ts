@@ -1,11 +1,13 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { testConnection } from './config/database';
+import pool, { testConnection } from './config/database';
 
 import authRoutes    from './routes/auth.routes';
 import projectRoutes from './routes/project.routes';
 import taskRoutes    from './routes/task.routes';
+import dashboardRoutes from './routes/dashboard.routes';
+import { apiRateLimit, noStore, securityHeaders } from './middleware/security';
 import { requireTrustedOrigin } from './middleware/trustedOrigin';
 
 dotenv.config();
@@ -55,30 +57,62 @@ function validateEnvironment(): void {
 }
 
 // ── Middleware ────────────────────────────────────────────────────────────
+app.disable('x-powered-by');
+// Number of reverse proxies in front of the API (needed for correct client IPs in rate limiting).
+const trustProxy = Number.parseInt(process.env.TRUST_PROXY || '0', 10);
+if (trustProxy > 0) app.set('trust proxy', trustProxy);
+
+app.use(securityHeaders);
 app.use(cors({
   origin:      process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true,
+  maxAge:      600,
 }));
-app.use('/api', requireTrustedOrigin);
+app.use('/api', noStore, apiRateLimit, requireTrustedOrigin);
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
-// ── Health check ──────────────────────────────────────────────────────────
+// ── Health checks ─────────────────────────────────────────────────────────
+// Liveness: the process is up.
 app.get('/health', (_req, res) => {
   res.status(200).json({ success: true, message: 'TaskFlow API is running.' });
 });
 
+// Readiness: the API can reach its database.
+app.get('/ready', async (_req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.status(200).json({ success: true, message: 'TaskFlow API is ready.' });
+  } catch {
+    res.status(503).json({ success: false, message: 'Database unavailable.' });
+  }
+});
+
 // ── Routes ────────────────────────────────────────────────────────────────
-app.use('/api/auth',     authRoutes);
-app.use('/api/projects', projectRoutes);
-app.use('/api/tasks',    taskRoutes);
+app.use('/api/auth',      authRoutes);
+app.use('/api/projects',  projectRoutes);
+app.use('/api/tasks',     taskRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // ── 404 handler ───────────────────────────────────────────────────────────
 app.use((_req, res) => {
   res.status(404).json({ success: false, message: 'Route not found.' });
 });
 
-app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+app.use((error: unknown, _req: express.Request, res: express.Response, next: express.NextFunction) => {
+  if (res.headersSent) {
+    next(error);
+    return;
+  }
+  const type = (error as { type?: string })?.type;
+  if (type === 'entity.parse.failed') {
+    res.status(400).json({ success: false, message: 'Request body must be valid JSON.' });
+    return;
+  }
+  if (type === 'entity.too.large') {
+    res.status(413).json({ success: false, message: 'Request body is too large.' });
+    return;
+  }
   console.error('Unhandled API error:', error);
   res.status(500).json({ success: false, message: 'An unexpected server error occurred.' });
 });
@@ -88,15 +122,37 @@ async function start() {
   try {
     validateEnvironment();
     await testConnection();
-    app.listen(PORT, () => {
-      console.log(`🚀  TaskFlow API running on http://localhost:${PORT}`);
-    });
   } catch (error) {
-    console.error('❌  Failed to connect to the database:', error);
+    console.error('❌  TaskFlow API failed to start:', error instanceof Error ? error.message : error);
     process.exit(1);
   }
+
+  const server = app.listen(PORT, () => {
+    console.log(`🚀  TaskFlow API running on http://localhost:${PORT}`);
+  });
+
+  let shuttingDown = false;
+  const shutdown = (signal: string) => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    console.log(`${signal} received — closing TaskFlow API.`);
+    const forceExit = setTimeout(() => process.exit(1), 10_000);
+    forceExit.unref();
+    server.close(async () => {
+      await pool.end().catch(() => undefined);
+      process.exit(0);
+    });
+  };
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 }
 
-start();
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled promise rejection:', reason);
+});
+
+if (require.main === module) {
+  void start();
+}
 
 export default app;

@@ -16,6 +16,8 @@ async function setupDatabase() {
   });
 
   try {
+    // Match the API's UTC session so timestamps written here are UTC too.
+    await connection.query("SET time_zone = '+00:00'");
     const localSchemaPath = path.resolve(__dirname, '../../database/schema.sql');
     const containerSchemaPath = path.resolve(__dirname, '../database/schema.sql');
     const schemaPath = fs.existsSync(localSchemaPath) ? localSchemaPath : containerSchemaPath;
@@ -40,6 +42,22 @@ async function setupDatabase() {
     if (sessionVersionColumn.length === 0) {
       await connection.query('ALTER TABLE users ADD COLUMN session_version INT UNSIGNED NOT NULL DEFAULT 0 AFTER password');
       console.log('Added session versioning for password-change sign-outs.');
+    }
+    const [completedAtColumn] = await connection.query(
+      `SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'tasks' AND COLUMN_NAME = 'completed_at'`,
+      [databaseName]
+    );
+    if (completedAtColumn.length === 0) {
+      await connection.query('ALTER TABLE tasks ADD COLUMN completed_at DATETIME NULL DEFAULT NULL AFTER due_date, ADD INDEX idx_tasks_completed_at (completed_at)');
+      await connection.query("UPDATE tasks SET completed_at = updated_at WHERE status = 'COMPLETED'");
+      console.log('Added task completion timestamps for dashboard trends.');
+    }
+    const [projectUpdatedIndex] = await connection.query(
+      `SELECT 1 FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'tasks' AND INDEX_NAME = 'idx_tasks_project_updated'`,
+      [databaseName]
+    );
+    if (projectUpdatedIndex.length === 0) {
+      await connection.query('ALTER TABLE tasks ADD INDEX idx_tasks_project_updated (project_id, updated_at)');
     }
     const [tables] = await connection.query('SHOW TABLES');
     console.log(`TaskFlow schema ready. Tables: ${tables.map((row) => Object.values(row)[0]).join(', ')}`);

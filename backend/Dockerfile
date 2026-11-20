@@ -23,4 +23,5 @@ COPY --from=build --chown=node:node /app/scripts ./scripts
 USER node
 EXPOSE 5001
 
-CMD ["npm", "start"]
+# Apply idempotent schema migrations, then start the API.
+CMD ["sh", "-c", "node scripts/setup-db.js && exec node dist/server.js"]

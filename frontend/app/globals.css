@@ -405,6 +405,34 @@ html[data-theme="dark"] {
 .board-move-forward:hover { color: var(--accent); background: var(--accent-soft); }
 .board-move-forward[data-target="COMPLETED"]:hover { color: var(--board-done); background: color-mix(in srgb, var(--board-done) 12%, transparent); }
 
+/* ── Dashboard ──────────────────────────────────────────── */
+.dash-kpi { --kpi-accent: var(--text-primary); border-color: var(--separator); }
+.dash-kpi[data-tone="danger"] { --kpi-accent: var(--board-danger); }
+.dash-kpi[data-tone="success"] { --kpi-accent: var(--board-done); }
+.dash-kpi[data-tone="accent"] { --kpi-accent: var(--accent); }
+.dash-kpi:hover { box-shadow: var(--surface-shadow-hover); }
+.dash-kpi-value { color: var(--kpi-accent); }
+html[data-theme="dark"] .dash-kpi[data-tone="accent"] { --kpi-accent: #6cc8d6; }
+.dash-meter { background: var(--surface-subtle); box-shadow: inset 0 0 0 1px var(--separator); }
+.dash-meter-fill { background: var(--accent); }
+html[data-theme="dark"] .dash-meter-fill { background: #3fb3c4; }
+.dash-status-fill[data-status="TODO"] { background: var(--board-todo); }
+.dash-status-fill[data-status="IN_PROGRESS"] { background: var(--board-progress); }
+.dash-status-fill[data-status="COMPLETED"] { background: var(--board-done); }
+.dash-gridline { border-color: var(--separator); }
+.dash-bar { background: var(--accent); }
+html[data-theme="dark"] .dash-bar { background: #3fb3c4; }
+.dash-bar-empty { background: var(--separator); }
+.dash-bar:is(:focus-visible, .group:focus-visible *) { --tw-ring-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+.dash-tooltip { color: var(--surface); background: var(--text-primary); }
+.dash-priority-dot { background: var(--board-todo); }
+.dash-priority-dot[data-priority="HIGH"] { background: var(--board-danger); }
+.dash-priority-dot[data-priority="MEDIUM"] { background: var(--board-warn); }
+.dash-priority-dot[data-priority="LOW"] { background: var(--board-done); }
+.dash-activity-dot { background: var(--surface-subtle); box-shadow: inset 0 0 0 1px var(--separator); }
+@keyframes dashPulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
+.dash-skeleton { background: var(--surface); box-shadow: inset 0 0 0 1px var(--separator); animation: dashPulse 1.4s ease-in-out infinite; }
+
 .view-toggle { border-color: var(--separator); background: var(--surface-subtle); }
 .view-toggle-button { color: var(--text-secondary); }
 .view-toggle-button:hover { color: var(--text-primary); }

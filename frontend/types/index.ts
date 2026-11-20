@@ -65,6 +65,7 @@ export interface Task {
   priority: 'LOW' | 'MEDIUM' | 'HIGH';
   status: 'TODO' | 'IN_PROGRESS' | 'COMPLETED';
   due_date?: string | null;
+  completed_at?: string | null;
   created_by: number;
   assigned_to?: number | null;
   project_name?: string;
@@ -89,6 +90,57 @@ export interface DashboardStats {
     in_progress_tasks: number;
     todo_tasks: number;
   };
+}
+
+export interface DashboardProjectProgress {
+  id: number;
+  name: string;
+  status: Project['status'];
+  end_date?: string | null;
+  task_count: number;
+  completed_count: number;
+  overdue_count: number;
+  last_activity: string;
+}
+
+export interface DashboardActivity {
+  id: number;
+  title: string;
+  status: Task['status'];
+  priority: Task['priority'];
+  project_id: number;
+  project_name: string;
+  assignee_name?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DashboardData {
+  today: string;
+  tasks: {
+    total: number;
+    todo: number;
+    in_progress: number;
+    completed: number;
+    overdue: number;
+    due_this_week: number;
+    my_open: number;
+    my_overdue: number;
+    completed_last_7_days: number;
+    unassigned: number;
+  };
+  projects: {
+    total: number;
+    active: number;
+    planning: number;
+    on_hold: number;
+    completed: number;
+  };
+  my_tasks: Task[];
+  deadlines: Task[];
+  project_progress: DashboardProjectProgress[];
+  completion_trend: { date: string; count: number }[];
+  recent_activity: DashboardActivity[];
 }
 
 export interface ApiResponse<T = unknown> {

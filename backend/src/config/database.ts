@@ -15,6 +15,12 @@ const pool = mysql.createPool({
   timezone:           'Z',
 });
 
+// mysql2 reads DATETIME values as UTC ('Z'), so the session must also write UTC.
+// Without this, CURRENT_TIMESTAMP defaults use the MySQL server's zone and drift from UTC_TIMESTAMP().
+pool.pool.on('connection', (connection) => {
+  connection.query("SET time_zone = '+00:00'");
+});
+
 export async function testConnection(): Promise<void> {
   const connection = await pool.getConnection();
   console.log('✅  MySQL connected successfully');
