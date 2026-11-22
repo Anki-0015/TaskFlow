@@ -7,6 +7,7 @@ import authRoutes    from './routes/auth.routes';
 import projectRoutes from './routes/project.routes';
 import taskRoutes    from './routes/task.routes';
 import dashboardRoutes from './routes/dashboard.routes';
+import adminRoutes from './routes/admin.routes';
 import { apiRateLimit, noStore, securityHeaders } from './middleware/security';
 import { requireTrustedOrigin } from './middleware/trustedOrigin';
 
@@ -93,6 +94,7 @@ app.use('/api/auth',      authRoutes);
 app.use('/api/projects',  projectRoutes);
 app.use('/api/tasks',     taskRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/admin',     adminRoutes);
 
 // ── 404 handler ───────────────────────────────────────────────────────────
 app.use((_req, res) => {

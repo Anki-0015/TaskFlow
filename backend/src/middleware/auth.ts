@@ -47,11 +47,11 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
   }
 
   try {
-    const [users] = await pool.query<(RowDataPacket & { session_version: number })[]>(
-      'SELECT session_version FROM users WHERE id = ?',
+    const [users] = await pool.query<(RowDataPacket & { session_version: number; role: string })[]>(
+      'SELECT session_version, role FROM users WHERE id = ?',
       [decoded.id],
     );
-    if (!users.length || Number(users[0].session_version) !== decoded.session_version) {
+    if (!users.length || Number(users[0].session_version) !== decoded.session_version || users[0].role !== decoded.role) {
       res.status(401).json({ success: false, message: 'Invalid or expired token.' });
       return;
     }
@@ -60,4 +60,12 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
   } catch (error) {
     next(error);
   }
+}
+
+export function requireAdmin(req: Request, res: Response, next: NextFunction): void {
+  if (req.user?.role !== 'admin') {
+    res.status(403).json({ success: false, message: 'Administrator access is required.' });
+    return;
+  }
+  next();
 }

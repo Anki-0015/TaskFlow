@@ -7,12 +7,13 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { ProjectService } from '@/services/project.service';
 
-const nav = [
+const nav: { href: string; label: string; icon: string; adminOnly?: boolean }[] = [
   { href: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
   { href: '/projects',  label: 'Projects',  icon: 'projects' },
   { href: '/tasks',     label: 'Tasks',     icon: 'tasks' },
   { href: '/notifications', label: 'Notifications', icon: 'notifications' },
   { href: '/profile',   label: 'Profile',   icon: 'profile' },
+  { href: '/admin', label: 'Admin', icon: 'admin', adminOnly: true },
 ];
 
 function NavIcon({ name }: { name: string }) {
@@ -22,6 +23,7 @@ function NavIcon({ name }: { name: string }) {
     tasks: <><rect x="4" y="3.5" width="16" height="17" rx="2.5" /><path d="m8 11 2 2 5-5M8 16h8" /></>,
     notifications: <><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" /><path d="M10 21h4" /></>,
     profile: <><circle cx="12" cy="8" r="3.5" /><path d="M5 20a7 7 0 0 1 14 0" /></>,
+    admin: <><path d="M12 3 20 6v5c0 5-3.3 8.2-8 10-4.7-1.8-8-5-8-10V6z" /><path d="m9 12 2 2 4-4" /></>,
   };
   return <svg aria-hidden="true" viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>;
 }
@@ -83,7 +85,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 
         <div className="workspace-label px-5 pb-2 text-[10px] font-bold uppercase tracking-[.18em]">Workspace</div>
         <nav aria-label="Main navigation" className="flex-1 space-y-1.5 overflow-y-auto px-3 py-2">
-          {nav.map((item) => {
+          {nav.filter((item) => !item.adminOnly || user?.role === 'admin').map((item) => {
             const active = pathname === item.href || pathname.startsWith(item.href + '/');
             return (
               <Link

@@ -1,8 +1,8 @@
 USE taskflow;
 
 INSERT INTO users (name, username, email, password, role) VALUES
-('Alice Johnson',  'alice', 'alice@taskflow.dev', '$2b$10$VbMsNCBKpLeiUmcLJiEOHuOJxpL01UiVzALZkJTAMzrAiIoMfMSUm', 'admin'),
-('Bob Smith',      'bob',   'bob@taskflow.dev',   '$2b$10$VbMsNCBKpLeiUmcLJiEOHuOJxpL01UiVzALZkJTAMzrAiIoMfMSUm', 'admin'),
+('Alice Johnson',  'alice', 'alice@taskflow.dev', '$2b$10$VbMsNCBKpLeiUmcLJiEOHuOJxpL01UiVzALZkJTAMzrAiIoMfMSUm', 'member'),
+('Bob Smith',      'bob',   'bob@taskflow.dev',   '$2b$10$VbMsNCBKpLeiUmcLJiEOHuOJxpL01UiVzALZkJTAMzrAiIoMfMSUm', 'member'),
 ('Carol Williams', 'carol', 'carol@taskflow.dev', '$2b$10$VbMsNCBKpLeiUmcLJiEOHuOJxpL01UiVzALZkJTAMzrAiIoMfMSUm', 'member'),
 ('David Lee',      'david', 'david@taskflow.dev', '$2b$10$VbMsNCBKpLeiUmcLJiEOHuOJxpL01UiVzALZkJTAMzrAiIoMfMSUm', 'member'),
 ('Eva Martinez',   'eva',   'eva@taskflow.dev',   '$2b$10$VbMsNCBKpLeiUmcLJiEOHuOJxpL01UiVzALZkJTAMzrAiIoMfMSUm', 'member'),
